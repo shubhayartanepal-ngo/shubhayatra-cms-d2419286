@@ -1,46 +1,92 @@
-import React, { forwardRef } from "react";
+import type { InputHTMLAttributes, ReactNode } from 'react'
+import { forwardRef, useState } from 'react'
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   success?: boolean;
   error?: boolean;
   hint?: string;
+  label?: ReactNode;
+  wrapperClassName?: string;
+  labelClassName?: string;
+  showPasswordToggle?: boolean;
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
   (
     {
       type = "text",
-      className = "",
+      className = '',
       success = false,
       error = false,
       hint,
+      label,
+      wrapperClassName = '',
+      labelClassName = '',
+      showPasswordToggle = false,
       ...props
     },
     ref,
   ) => {
-    let inputClasses = `h-11 w-full rounded-lg border appearance-none px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-none focus:ring dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 ${className}`;
+    const [isPasswordVisible, setIsPasswordVisible] = useState(false)
+    const isPasswordField = type === 'password' && showPasswordToggle
+    const resolvedType = isPasswordField ? (isPasswordVisible ? 'text' : 'password') : type
+
+    let inputClasses = `h-12 w-full rounded-[0.65rem] border border-[#b9c2da] bg-white px-3.5 py-3 text-sm text-[#1f2230] outline-none transition placeholder:text-slate-400 focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 ${className}`;
+
+    if (isPasswordField) {
+      inputClasses += ' pr-11'
+    }
 
     if (props.disabled) {
-      inputClasses += ` text-gray-500 border-gray-300 cursor-not-allowed dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700`;
+      inputClasses += ` cursor-not-allowed border-gray-300 text-gray-500 opacity-70`;
     } else if (error) {
-      inputClasses += ` text-error-800 border-error-500 focus:ring focus:ring-error-500/10  dark:text-error-400 dark:border-error-500`;
+      inputClasses += ` border-red-500 text-red-700 focus:border-red-500 focus:ring-red-500/20`;
     } else if (success) {
-      inputClasses += ` text-success-500 border-success-400 focus:ring-success-500/10 focus:border-success-300  dark:text-success-400 dark:border-success-500`;
+      inputClasses += ` border-emerald-500 text-emerald-700 focus:border-emerald-500 focus:ring-emerald-500/20`;
     } else {
-      inputClasses += ` bg-transparent text-gray-800 border-gray-300 focus:border-brand-300 focus:ring focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800`;
+      inputClasses += ` border-[#b9c2da] bg-white text-[#1f2230]`;
     }
 
     return (
-      <div className="relative">
-        <input type={type} ref={ref} className={inputClasses} {...props} />
+      <div className={`grid gap-2 ${wrapperClassName}`.trim()}>
+        {label && (
+          <label className={`text-sm font-semibold text-brand-blue ${labelClassName}`.trim()} htmlFor={props.id}>
+            {label}
+          </label>
+        )}
+        <div className="relative">
+          <input type={resolvedType} ref={ref} className={inputClasses} {...props} />
+          {isPasswordField && (
+            <button
+              type="button"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-blue/75 transition hover:text-brand-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue/25"
+              onClick={() => setIsPasswordVisible((current) => !current)}
+              aria-label={isPasswordVisible ? 'Hide password' : 'Show password'}
+            >
+              {isPasswordVisible ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M3 3L21 21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  <path d="M10.58 10.58C10.21 10.95 10 11.46 10 12C10 13.1 10.9 14 12 14C12.54 14 13.05 13.79 13.42 13.42" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  <path d="M9.88 5.09C10.56 4.88 11.27 4.77 12 4.77C16.5 4.77 20.27 8 21.5 12C20.92 13.89 19.72 15.55 18.13 16.72" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  <path d="M6.11 6.11C4.36 7.38 3.04 9.24 2.5 12C3.73 16 7.5 19.23 12 19.23C13.53 19.23 14.98 18.86 16.25 18.2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M2.5 12C3.73 8 7.5 4.77 12 4.77C16.5 4.77 20.27 8 21.5 12C20.27 16 16.5 19.23 12 19.23C7.5 19.23 3.73 16 2.5 12Z" stroke="currentColor" strokeWidth="2" />
+                  <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
+                </svg>
+              )}
+            </button>
+          )}
+        </div>
         {hint && (
           <p
-            className={`mt-1.5 text-xs ${
+            className={`text-xs ${
               error
-                ? "text-error-500"
+                ? 'text-red-500'
                 : success
-                  ? "text-success-500"
-                  : "text-gray-500"
+                  ? 'text-emerald-600'
+                  : 'text-brand-muted'
             }`}
           >
             {hint}

@@ -1,51 +1,69 @@
-import React, { ReactNode } from "react";
+import type { MouseEvent, ReactNode } from 'react'
+import { Link } from 'react-router'
+
 interface ButtonProps {
-  type?: "button" | "submit";
+  type?: 'button' | 'submit'
   children: ReactNode;
-  size?: "sm" | "md";
-  variant?: "primary" | "outline" | "secondary";
+  size?: 'sm' | 'md'
+  variant?: 'primary' | 'outline' | 'secondary'
   startIcon?: ReactNode;
   endIcon?: ReactNode;
-  onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  onClick?: (event: MouseEvent<HTMLButtonElement>) => void;
   disabled?: boolean;
   className?: string;
+  to?: string;
 }
 
-const Button: React.FC<ButtonProps> = ({
-  type = "button",
+const Button = ({
+  type = 'button',
   children,
-  size = "md",
-  variant = "primary",
+  size = 'md',
+  variant = 'primary',
   startIcon,
   endIcon,
   onClick,
-  className = "",
+  className = '',
   disabled = false,
-}) => {
-  // Size Classes
+  to,
+}: ButtonProps) => {
   const sizeClasses = {
-    sm: "px-2 py-2 text-sm",
-    md: "px-5 py-2 text-sm",
+    sm: 'px-3 py-2 text-sm',
+    md: 'px-5 py-3 text-sm',
   };
 
-  // Variant Classes
   const variantClasses = {
     primary:
-      "bg-brand-500 text-white shadow-theme-xs hover:bg-brand-600 disabled:bg-brand-300",
+      'bg-linear-to-b from-brand-red to-brand-dark-red text-white shadow-[0_12px_20px_rgba(240,50,50,0.25)] hover:-translate-y-0.5 hover:shadow-[0_14px_22px_rgba(240,50,50,0.32)]',
     secondary:
-      "bg-red-500 text-white shadow-theme-xs hover:bg-red-600 disabled:bg-brand-300",
+      'bg-brand-blue text-white shadow-[0_12px_20px_rgba(37,50,102,0.18)] hover:bg-brand-blue/90',
     outline:
-      "bg-white text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:ring-gray-700 dark:hover:bg-white/[0.03] dark:hover:text-gray-300",
+      'border border-brand-blue/20 bg-white text-brand-blue hover:bg-brand-blue/5',
   };
+
+  const sharedClasses = [
+    'inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue/30 focus-visible:ring-offset-2 focus-visible:ring-offset-white',
+    sizeClasses[size],
+    variantClasses[variant],
+    disabled ? 'cursor-not-allowed opacity-50' : '',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  if (to) {
+    return (
+      <Link className={sharedClasses} aria-disabled={disabled} tabIndex={disabled ? -1 : undefined} to={to}>
+        {startIcon && <span className="flex items-center">{startIcon}</span>}
+        {children}
+        {endIcon && <span className="flex items-center">{endIcon}</span>}
+      </Link>
+    )
+  }
 
   return (
     <button
       type={type}
-      className={`inline-flex items-center justify-center gap-2 rounded-lg transition ${className} ${
-        sizeClasses[size]
-      } ${variantClasses[variant]} ${
-        disabled ? "cursor-not-allowed opacity-50" : ""
-      }`}
+      className={sharedClasses}
       onClick={(e) => onClick?.(e)}
       disabled={disabled}
     >
@@ -53,7 +71,7 @@ const Button: React.FC<ButtonProps> = ({
       {children}
       {endIcon && <span className="flex items-center">{endIcon}</span>}
     </button>
-  );
-};
+  )
+}
 
 export default Button;

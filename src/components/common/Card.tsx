@@ -1,25 +1,33 @@
-// import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-// import Button from "../ui/button/Button";
-// import { faTrash } from "@fortawesome/free-solid-svg-icons";
+import type { ReactNode } from 'react'
 
 interface CardProps {
-  title: string;
+  title?: string;
   imageUrl?: string;
   onView?: () => void;
   onClick?: () => void;
+  className?: string;
+  children?: ReactNode;
 }
 
-const Card: React.FC<CardProps> = ({ title, imageUrl, onView, onClick }) => {
+const Card = ({ title, imageUrl, onView, onClick, className = '', children }: CardProps) => {
+  if (children) {
+    return (
+      <div className={`rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md dark:border-gray-800 dark:bg-white/3 ${className}`.trim()}>
+        {children}
+      </div>
+    )
+  }
+
   return (
     <div
       onDoubleClick={onView}
-      className="cursor-pointer rounded-xl border border-gray-200 bg-white p-4 transition-shadow hover:shadow-md dark:border-gray-800 dark:bg-white/[0.03]"
+      className={`cursor-pointer rounded-xl border border-gray-200 bg-white p-4 transition-shadow hover:shadow-md dark:border-gray-800 dark:bg-white/3 ${className}`.trim()}
     >
       <div className="mb-5 overflow-hidden rounded-lg">
         <img
-          src={imageUrl || "images/cards/card-01.png"}
-          alt="card"
-          className="overflow-hidden rounded-lg object-cover w-full h-40"
+          src={imageUrl || 'images/cards/card-01.png'}
+          alt={title || 'card'}
+          className="h-40 w-full overflow-hidden rounded-lg object-cover"
         />
       </div>
 
@@ -30,7 +38,7 @@ const Card: React.FC<CardProps> = ({ title, imageUrl, onView, onClick }) => {
         <button
           className="text-red-500 text-base hover:text-red-700"
           onClick={(e) => {
-            e.stopPropagation(); // Prevent triggering onDoubleClick
+            e.stopPropagation();
             onClick?.();
           }}
         >

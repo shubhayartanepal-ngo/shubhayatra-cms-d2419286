@@ -1,8 +1,8 @@
-import React, { useState } from "react";
-import ComponentCard from "../../common/ComponentCard";
-import Label from "../Label";
-import Select from "../Select";
-import MultiSelect from "../MultiSelect";
+import { useState } from 'react'
+import ComponentCard from '../../common/ComponentCard'
+import Label from '../Label'
+import Select from '../Select'
+import MultiSelect from '../MultiSelect'
 
 export default function SelectInputs() {
   const options = [
@@ -11,9 +11,9 @@ export default function SelectInputs() {
     { value: "development", label: "Development" },
   ];
   const handleSelectChange = (value: string) => {
-    console.log("Selected value:", value);
-  };
-  const [selectedValues, setSelectedValues] = useState<string[]>([]);
+    console.log('Selected value:', value)
+  }
+  const [selectedValues, setSelectedValues] = useState<string[]>([])
 
   const multiOptions = [
     { value: "1", text: "Option 1", selected: false },
@@ -44,9 +44,9 @@ export default function SelectInputs() {
         </div>
         <div>
           <Label>Selected Values:</Label>
-          <p>{selectedValues.join(", ")}</p>
+          <p>{selectedValues.join(', ')}</p>
         </div>
       </div>
     </ComponentCard>
-  );
+  )
 }

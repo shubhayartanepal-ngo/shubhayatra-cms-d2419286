@@ -1,41 +1,25 @@
-import React from "react";
-import ComponentCard from "../../common/ComponentCard";
-import Switch from "../switch/Switch";
+import { useState } from 'react'
+import ComponentCard from '../../common/ComponentCard'
 
 export default function ToggleSwitch() {
-  const handleSwitchChange = (checked: boolean) => {
-    console.log("Switch is now:", checked ? "ON" : "OFF");
-  };
+  const [enabled, setEnabled] = useState(true)
   return (
     <ComponentCard title="Toggle switch input">
       <div className="flex gap-4">
-        <Switch
-          label="Default"
-          defaultChecked={true}
-          onChange={handleSwitchChange}
-        />
-        <Switch
-          label="Checked"
-          defaultChecked={true}
-          onChange={handleSwitchChange}
-        />
-        <Switch label="Disabled" disabled={true} />
-      </div>{" "}
-      <div className="flex gap-4">
-        <Switch
-          label="Default"
-          defaultChecked={true}
-          onChange={handleSwitchChange}
-          color="gray"
-        />
-        <Switch
-          label="Checked"
-          defaultChecked={true}
-          onChange={handleSwitchChange}
-          color="gray"
-        />
-        <Switch label="Disabled" disabled={true} color="gray" />
+        <label className="inline-flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={enabled}
+            onChange={(event) => setEnabled(event.target.checked)}
+            className="h-4 w-4 accent-brand-red"
+          />
+          <span>Enabled</span>
+        </label>
+        <label className="inline-flex items-center gap-2 opacity-60">
+          <input type="checkbox" checked disabled className="h-4 w-4 accent-brand-red" />
+          <span>Disabled</span>
+        </label>
       </div>
     </ComponentCard>
-  );
+  )
 }

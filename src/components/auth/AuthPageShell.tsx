@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { NavLink } from 'react-router'
 
 type AuthView = 'login' | 'register'
 
@@ -31,8 +30,16 @@ function AuthPageShell({ activeView, title, subtitle, children, footer }: AuthPa
           </div>
         </header>
 
+        <div className="mb-4">
+          <p className="m-0 text-xs font-semibold uppercase tracking-wide text-brand-muted">{activeView}</p>
+          <h1 id="auth-title" className="m-0 mt-1 font-heading text-2xl font-bold text-brand-blue">
+            {title}
+          </h1>
+          <p className="m-0 mt-1 text-sm text-brand-muted">{subtitle}</p>
+        </div>
+
         {children}
-        <div className='mb-2'></div>
+        <div className="mb-2" />
         {footer}
       </section>
     </main>

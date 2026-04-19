@@ -1,14 +1,13 @@
-import React, { useState, useEffect, useRef } from "react";
-import Label from "../Label";
-import FileInput from "../input/FileInput";
-import { Pencil } from "lucide-react";
+import { useEffect, useRef, useState, type ChangeEvent } from 'react'
+import Label from '../Label'
+import FileInput from '../input/FileInput'
 // import { DEFAULT_IMAGE_URL } from "../../../constants/defaultImageUrl.constants";
 
 interface UploadImageProps {
-  onFileSelect: (file: File) => void;
-  label?: string;
-  initialImageUrl?: string;
-  editable?: boolean;
+  onFileSelect: (file: File) => void
+  label?: string
+  initialImageUrl?: string
+  editable?: boolean
 }
 
 export default function UploadImage({
@@ -19,33 +18,33 @@ export default function UploadImage({
 }: UploadImageProps) {
   const [previewUrl, setPreviewUrl] = useState<string | undefined>(
     initialImageUrl,
-  );
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  )
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
     if (file) {
-      onFileSelect(file);
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
+      onFileSelect(file)
+      const url = URL.createObjectURL(file)
+      setPreviewUrl(url)
     }
-  };
+  }
 
   useEffect(() => {
-    if (initialImageUrl) setPreviewUrl(initialImageUrl);
-  }, [initialImageUrl]);
+    if (initialImageUrl) setPreviewUrl(initialImageUrl)
+  }, [initialImageUrl])
 
   useEffect(() => {
     return () => {
       if (previewUrl?.startsWith("blob:")) {
-        URL.revokeObjectURL(previewUrl);
+        URL.revokeObjectURL(previewUrl)
       }
-    };
-  }, [previewUrl]);
+    }
+  }, [previewUrl])
 
   const triggerFileSelect = () => {
-    fileInputRef.current?.click();
-  };
+    fileInputRef.current?.click()
+  }
 
   return (
     <div className="flex flex-col items-center space-y-4">
@@ -70,7 +69,10 @@ export default function UploadImage({
             onClick={triggerFileSelect}
             className="absolute -top-1 -right-1 w-[34px] h-[34px] rounded-full bg-white border border-gray-200 shadow-md cursor-pointer transition-all duration-200 hover:bg-gray-100 flex items-center justify-center"
           >
-            <Pencil className="text-gray-500 text-sm w-4 h-4" />
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 20H8L19 9L15 5L4 16V20Z" stroke="currentColor" strokeWidth="2" />
+              <path d="M13 7L17 11" stroke="currentColor" strokeWidth="2" />
+            </svg>
           </label>
         )}
       </div>
@@ -79,9 +81,8 @@ export default function UploadImage({
       <FileInput
         onChange={handleFileChange}
         className="hidden"
-        // Forward the ref so we can click it via label
         ref={fileInputRef}
       />
     </div>
-  );
+  )
 }

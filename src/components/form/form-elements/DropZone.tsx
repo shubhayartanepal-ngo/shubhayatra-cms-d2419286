@@ -1,37 +1,37 @@
-import React from "react";
-import ComponentCard from "../../common/ComponentCard";
-import { useDropzone } from "react-dropzone";
+import { type DragEvent, useRef, useState } from 'react'
 
 interface DropzoneComponentProps {
-  onFileSelect: (file: File) => void;
+  onFileSelect: (file: File) => void
 }
 
-const DropzoneComponent: React.FC<DropzoneComponentProps> = ({
-  onFileSelect,
-}) => {
-  const onDrop = (acceptedFiles: File[]) => {
-    console.log("Files dropped:", acceptedFiles);
-    if (acceptedFiles.length > 0) {
-      onFileSelect(acceptedFiles[0]); // only send the first file
-    }
-  };
+const DropzoneComponent = ({ onFileSelect }: DropzoneComponentProps) => {
+  const [isDragActive, setIsDragActive] = useState(false)
+  const inputRef = useRef<HTMLInputElement | null>(null)
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      "image/png": [],
-      "image/jpeg": [],
-      "image/webp": [],
-      "image/svg+xml": [],
-    },
-    multiple: false,
-  });
+  const handleFiles = (files: FileList | null) => {
+    if (files && files.length > 0) {
+      onFileSelect(files[0])
+    }
+  }
+
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault()
+    setIsDragActive(false)
+    handleFiles(event.dataTransfer.files)
+  }
 
   return (
     <>
-      <div className="transition border border-gray-300 border-dashed cursor-pointer dark:hover:border-brand-500 dark:border-gray-700 rounded-xl hover:border-brand-500">
+      <div
+        className="transition border border-gray-300 border-dashed cursor-pointer dark:hover:border-brand-500 dark:border-gray-700 rounded-xl hover:border-brand-500"
+        onDrop={handleDrop}
+        onDragOver={(event) => {
+          event.preventDefault()
+          setIsDragActive(true)
+        }}
+        onDragLeave={() => setIsDragActive(false)}
+      >
         <form
-          {...getRootProps()}
           className={`dropzone rounded-xl border-dashed border-gray-300 p-7 lg:p-10
             ${
               isDragActive
@@ -41,7 +41,13 @@ const DropzoneComponent: React.FC<DropzoneComponentProps> = ({
           `}
           id="demo-upload"
         >
-          <input {...getInputProps()} />
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/svg+xml"
+            className="hidden"
+            onChange={(event) => handleFiles(event.target.files)}
+          />
 
           <div className="dz-message flex flex-col items-center !m-0">
             <div className="mb-[22px] flex justify-center">
@@ -77,7 +83,7 @@ const DropzoneComponent: React.FC<DropzoneComponentProps> = ({
         </form>
       </div>
     </>
-  );
-};
+  )
+}
 
-export default DropzoneComponent;
+export default DropzoneComponent

@@ -10,7 +10,7 @@ interface AuthPageShellProps {
   footer?: ReactNode
 }
 
-function AuthPageShell({ activeView, title, subtitle, children, footer }: AuthPageShellProps) {
+function AuthPageShell({  children, footer }: AuthPageShellProps) {
   return (
     <main className="relative grid min-h-svh place-items-center overflow-hidden px-4 py-6 sm:px-6 lg:px-8">
       <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(240,50,50,0.24)_0%,rgba(240,50,50,0)_72%)]" />

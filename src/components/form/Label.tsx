@@ -1,27 +1,20 @@
-import React, { FC, ReactNode } from "react";
-import { twMerge } from "tailwind-merge";
+import type { ReactNode } from 'react'
 
 interface LabelProps {
-  htmlFor?: string;
-  children: ReactNode;
-  className?: string;
+  htmlFor?: string
+  children: ReactNode
+  className?: string
 }
 
-const Label: FC<LabelProps> = ({ htmlFor, children, className }) => {
+const Label = ({ htmlFor, children, className = '' }: LabelProps) => {
   return (
     <label
       htmlFor={htmlFor}
-      className={twMerge(
-        // Default classes that apply by default
-        "mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400",
-
-        // User-defined className that can override the default margin
-        className,
-      )}
+      className={`mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400 ${className}`.trim()}
     >
       {children}
     </label>
-  );
-};
+  )
+}
 
-export default Label;
+export default Label

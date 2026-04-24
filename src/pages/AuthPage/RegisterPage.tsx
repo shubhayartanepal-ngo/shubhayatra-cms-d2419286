@@ -23,6 +23,14 @@ function RegisterPage() {
     gender: '',
   })
 
+  const isFormValid =
+    formData.userName.trim() !== '' &&
+    formData.email.trim() !== '' &&
+    formData.password.trim() !== '' &&
+    formData.contactNumber.trim() !== '' &&
+    formData.address.trim() !== '' &&
+    formData.gender !== ''
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
@@ -85,45 +93,57 @@ function RegisterPage() {
     >
       <form className="grid gap-4" noValidate onSubmit={handleSubmit}>
         <InputField
-          label="Username"
+          label={
+            <span>
+              Username <span className="text-red-500">*</span>
+            </span>
+          }
           id="userName"
           name="userName"
           type="text"
           autoComplete="username"
-          placeholder="johndoe"
+          placeholder="Enter your username"
           value={formData.userName}
           onChange={(event) => updateField('userName', event.target.value)}
           required
         />
 
         <InputField
-          label="Email address"
+          label={
+            <span>
+              Email <span className="text-red-500">*</span>
+            </span>
+          }
           id="email"
           name="email"
           type="email"
           autoComplete="email"
-          placeholder="john@example.com"
+          placeholder="Enter a valid email address"
           value={formData.email}
           onChange={(event) => updateField('email', event.target.value)}
           required
         />
 
         <InputField
-          label="Password"
+          label={
+            <span>
+              Password <span className="text-red-500">*</span>
+            </span>
+          }
           id="password"
           name="password"
           type="password"
           showPasswordToggle
           autoComplete="new-password"
-          placeholder="StrongPass1@"
+          placeholder="Enter a strong password"
           value={formData.password}
           onChange={(event) => updateField('password', event.target.value)}
           required
         />
 
- 
+
         <div className="grid gap-2">
-          <span className="text-sm font-semibold text-brand-blue">Gender</span>
+          <span className="text-sm font-semibold text-brand-blue">Gender <span className="text-red-500">*</span></span>
           <Select
             id="gender"
             name="gender"
@@ -140,36 +160,42 @@ function RegisterPage() {
         </div>
 
         <InputField
-          label="Contact number"
+          label={
+            <span>
+              Contact Number <span className="text-red-500">*</span>
+            </span>
+          }
           id="contactNumber"
           name="contactNumber"
           type="tel"
           autoComplete="tel"
-          placeholder="+9779800000000"
+          placeholder="Enter your contact number"
           value={formData.contactNumber}
           onChange={(event) => updateField('contactNumber', event.target.value)}
           required
         />
 
         <InputField
-          label="Address"
+          label={
+            <span>
+              Address <span className="text-red-500">*</span>
+            </span>
+          }
           id="address"
           name="address"
           type="text"
           autoComplete="street-address"
-          placeholder="Manigram, Nepal"
+          placeholder="Enter your address"
           value={formData.address}
           onChange={(event) => updateField('address', event.target.value)}
           required
-        />  
+        />
 
-        {formError && (
-          <p className="rounded-[0.65rem] border border-red-200 bg-red-50 px-3.5 py-2 text-sm text-red-600" aria-live="polite">
-            {formError}
-          </p>
-        )}
-
-        <Button className="w-full" type="submit" disabled={isLoading}>
+        <Button
+          className="w-full"
+          type="submit"
+          disabled={!isFormValid || isLoading}
+        >
           {isLoading ? 'Registering...' : 'Register'}
         </Button>
       </form>

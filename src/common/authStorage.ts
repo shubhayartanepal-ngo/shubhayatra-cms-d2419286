@@ -19,12 +19,10 @@ export const storeAuthToken = (value: unknown) => {
     typeof value === 'string'
       ? value
       : value && typeof value === 'object'
-        ? (
-            (value as { token?: unknown; accessToken?: unknown }).token ??
-            (value as { token?: unknown; accessToken?: unknown }).accessToken ??
-            ((value as { data?: { token?: unknown; accessToken?: unknown } }).data?.token ??
-              (value as { data?: { token?: unknown; accessToken?: unknown } }).data?.accessToken)
-          )
+        ? ((value as { token?: unknown; accessToken?: unknown }).token ??
+          (value as { token?: unknown; accessToken?: unknown }).accessToken ??
+          (value as { data?: { token?: unknown; accessToken?: unknown } }).data?.token ??
+          (value as { data?: { token?: unknown; accessToken?: unknown } }).data?.accessToken)
         : ''
 
   if (typeof token === 'string' && token.trim()) {

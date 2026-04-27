@@ -13,6 +13,8 @@ function ResetPasswordPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [formError, setFormError] = useState('')
 
+  const isFormValid = token.trim() !== '' && newPassword.trim() !== ''
+
   useEffect(() => {
     const search = new URLSearchParams(window.location.search)
     const queryToken = search.get('token')
@@ -77,25 +79,33 @@ function ResetPasswordPage() {
         /> */}
 
         <InputField
-          label="New password"
+          label={
+            <span>
+              New Password <span className="text-red-500">*</span>
+            </span>
+          }
           id="new-password"
           name="newPassword"
           type="password"
           showPasswordToggle
           autoComplete="new-password"
-          placeholder="NewStrongPass1@"
+          placeholder="Enter a new password"
           value={newPassword}
           onChange={(event) => setNewPassword(event.target.value)}
           required
         />
-
+        {/* 
         {formError && (
           <p className="rounded-[0.65rem] border border-red-200 bg-red-50 px-3.5 py-2 text-sm text-red-600" aria-live="polite">
             {formError}
           </p>
-        )}
+        )} */}
 
-        <Button className="w-full" type="submit" disabled={isLoading}>
+        <Button
+          className="w-full"
+          type="submit"
+          disabled={!isFormValid || isLoading}
+        >
           {isLoading ? 'Resetting...' : 'Reset password'}
         </Button>
       </form>

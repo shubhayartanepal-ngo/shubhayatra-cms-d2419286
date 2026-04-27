@@ -12,6 +12,8 @@ function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [formError, setFormError] = useState('')
 
+  const isFormValid = email.trim().length > 0
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
@@ -54,24 +56,26 @@ function ForgotPasswordPage() {
     >
       <form className="grid gap-4" noValidate onSubmit={handleSubmit}>
         <InputField
-          label="Email address"
+          label={
+            <span>
+              Email <span className="text-red-500">*</span>
+            </span>
+          }
           id="forgot-email"
           name="email"
           type="email"
           autoComplete="email"
-          placeholder="john@example.com"
+          placeholder="Enter a valid email address"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           required
         />
 
-        {formError && (
-          <p className="rounded-[0.65rem] border border-red-200 bg-red-50 px-3.5 py-2 text-sm text-red-600" aria-live="polite">
-            {formError}
-          </p>
-        )}
-
-        <Button className="w-full" type="submit" disabled={isLoading}>
+        <Button
+          className="w-full"
+          type="submit"
+          disabled={isLoading || !isFormValid}
+        >
           {isLoading ? 'Sending...' : 'Send reset link'}
         </Button>
       </form>

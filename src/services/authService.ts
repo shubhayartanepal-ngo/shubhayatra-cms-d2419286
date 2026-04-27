@@ -1,37 +1,19 @@
 import apiClient from '../common/apiClient'
-import { UserRole } from '../enums/UserRole.enum'
-import { Gender } from '../enums/Gender.enum'
 
-export interface LoginPayload {
-  username: string
-  password: string
-}
-
-export interface RegisterPayload {
-  userName: string
-  email: string
-  password: string
-  roles: UserRole[]
-  contactNumber: string
-  address: string
-  gender: Gender
-}
-
-export interface ForgotPasswordPayload {
-  email: string
-}
-
-export interface ResetPasswordPayload {
-  token: string
-  newPassword: string
-}
+import type {
+  ForgotPasswordPayload,
+  LoginPayload,
+  RegisterPayload,
+  ResetPasswordPayload,
+} from '../interfaces/authInterface'
 
 const verifyEmailRequests = new Map<string, Promise<unknown>>()
 
 const authService = {
   login: async (payload: LoginPayload) => {
     const response = await apiClient.post('/auth/login', payload)
-    return response.data
+    console.log(response.data.data)
+    return response.data.data
   },
 
   register: async (payload: RegisterPayload) => {

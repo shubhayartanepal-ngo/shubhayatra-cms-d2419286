@@ -6,11 +6,12 @@ import Button from '../../components/ui/button/Button'
 import InputField from '../../components/form/input/InputField'
 import authService from '../../services/authService'
 import { errorHandler } from '../../common/errorHandler'
+import { storeAuthToken } from '../../common/authStorage'
 
 function LoginPage() {
   const navigate = useNavigate()
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
+  const [username, setUsername] = useState('gokef45030')
+  const [password, setPassword] = useState('Gokef45030@')
   const [isLoading, setIsLoading] = useState(false)
   const [formError, setFormError] = useState('')
 
@@ -28,7 +29,8 @@ function LoginPage() {
     setIsLoading(true)
 
     try {
-      await authService.login({ username: username.trim(), password })
+      const response = await authService.login({ username: username.trim(), password })
+      storeAuthToken(response)
       toast.success('Login successful')
       navigate('/dashboard')
     } catch (error) {
@@ -98,6 +100,8 @@ function LoginPage() {
             Forgot password?
           </Link>
         </div>
+
+        {formError ? <p className="text-sm font-medium text-red-600">{formError}</p> : null}
 
         <Button
           className="w-full"

@@ -14,6 +14,8 @@ function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [formError, setFormError] = useState('')
 
+  const isFormValid = username.trim() !== '' && password.trim() !== ''
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
@@ -54,7 +56,11 @@ function LoginPage() {
     >
       <form className="grid gap-4" noValidate onSubmit={handleSubmit}>
         <InputField
-          label="Username"
+          label={
+            <span>
+              Username <span className="text-red-500">*</span>
+            </span>
+          }
           id="login-username"
           name="username"
           type="text"
@@ -66,7 +72,11 @@ function LoginPage() {
         />
 
         <InputField
-          label="Password"
+          label={
+            <span>
+              Password <span className="text-red-500">*</span>
+            </span>
+          }
           id="login-password"
           name="password"
           type="password"
@@ -89,13 +99,11 @@ function LoginPage() {
           </Link>
         </div>
 
-        {formError && (
-          <p className="rounded-[0.65rem] border border-red-200 bg-red-50 px-3.5 py-2 text-sm text-red-600" aria-live="polite">
-            {formError}
-          </p>
-        )}
-
-        <Button className="w-full" type="submit" disabled={isLoading}>
+        <Button
+          className="w-full"
+          type="submit"
+          disabled={!isFormValid || isLoading}
+        >
           {isLoading ? 'Signing in...' : 'Sign in'}
         </Button>
       </form>

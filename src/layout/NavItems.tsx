@@ -17,44 +17,42 @@ export type NavItem = {
   subItems?: SubNavItem[];
 };
 
-export const navItems: NavItem[] = 
-   [
+export const navItems: NavItem[] = [
+  {
+    name: "Dashboard",
+    icon: <LayoutDashboard size={18} />,
+    path: "/dashboard",
+  },
+  {
+    name: "Pages",
+    icon: <FileText size={18} />,
+    subItems: [
       {
-        name: "Dashboard",
-        icon: <LayoutDashboard size={18} />,
+        name: "Members",
+        icon: <Users size={16} />,
+        path: "/members",
+      },
+      {
+        name: "Hero Section",
+        icon: <Image size={16} />,
         path: "/",
       },
       {
-        name: "Pages",
-        icon: <FileText size={18} />,
-        subItems: [
-          {
-            name: "Users",
-            icon: <Users size={16} />,
-            path: "/team",
-          },
-          {
-            name: "Hero Section",
-            icon: <Image size={16} />,
-            path: "/hero-section",
-          },
-          {
-            name: "Events",
-            icon: <Calendar size={16} />,
-            path: "/events",
-          },
-        ],
+        name: "Events",
+        icon: <Calendar size={16} />,
+        path: "/",
       },
-    
+    ],
+  },
+  {
+    name: "Setting",
+    icon: <Settings size={18} />,
+    subItems: [
       {
-        name: "Setting",
-        icon: <Settings size={18} />,
-        subItems: [
-          {
-            name: "Profile",
-            icon: <User size={16} />,
-            path: "/settings/profile",
-          },
-        ],
+        name: "Profile",
+        icon: <User size={16} />,
+        path: "/",
       },
-   ];
+    ],
+  },
+];

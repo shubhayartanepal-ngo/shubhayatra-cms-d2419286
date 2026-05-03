@@ -38,3 +38,8 @@ export const storeAuthToken = (value: unknown) => {
 export const getStoredAuthToken = () => {
   return localStorage.getItem(TOKEN_COOKIE_NAME) || getAuthCookie()
 }
+
+export const clearStoredAuthToken = () => {
+  localStorage.removeItem(TOKEN_COOKIE_NAME)
+  document.cookie = `${TOKEN_COOKIE_NAME}=; path=/; max-age=0; samesite=lax`
+}

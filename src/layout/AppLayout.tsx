@@ -1,30 +1,28 @@
-import React from "react";
-import { SidebarProvider, useSidebar } from "../context/SidebarContext";
-import { Outlet } from "react-router";
-import AppHeader from "./AppHeader";
-import AppSidebar from "./AppSidebar";
+import React from 'react'
+import { SidebarProvider, useSidebar } from '../context/SidebarContext'
+import { Outlet } from 'react-router'
+import AppHeader from './AppHeader'
+import AppSidebar from './AppSidebar'
 
 const LayoutContent: React.FC = () => {
-  const { isExpanded, isHovered, isMobileOpen } = useSidebar();
+  const { isExpanded, isHovered, isMobileOpen } = useSidebar()
 
   return (
-    <div className="min-h-screen xl:flex">
-      <div
-        className={`flex-1 transition-all duration-300 ease-in-out ${
-          isExpanded || isHovered ? "lg:ml-[290px]" : "lg:ml-[90px]"
-        } ${isMobileOpen ? "ml-0" : ""}`}
-      >
+    <div
+      className={`min-h-screen transition-[padding] duration-300 ease-in-out ${
+        isExpanded || isHovered ? 'lg:pl-[290px]' : 'lg:pl-[90px]'
+      } ${isMobileOpen ? 'pl-0' : ''}`}
+    >
+      <AppSidebar />
+      <div className="min-w-0">
         <AppHeader />
-        <div className="p-4 mx-auto max-w-screen-2xl md:p-6">
+        <div className="mx-auto max-w-screen-2xl p-4 md:p-6">
           <Outlet />
         </div>
       </div>
-      <div>
-        <AppSidebar />
-      </div>
     </div>
-  );
-};
+  )
+}
 
 const AppLayout: React.FC = () => {
   return (
@@ -33,7 +31,7 @@ const AppLayout: React.FC = () => {
         <LayoutContent />
       </SidebarProvider>
     </>
-  );
-};
+  )
+}
 
-export default AppLayout;
+export default AppLayout

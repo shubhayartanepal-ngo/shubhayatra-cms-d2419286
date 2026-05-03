@@ -10,8 +10,8 @@ import { storeAuthToken } from '../../common/authStorage'
 
 function LoginPage() {
   const navigate = useNavigate()
-  const [username, setUsername] = useState('gokef45030')
-  const [password, setPassword] = useState('Gokef45030@')
+  const [username, setUsername] = useState('admin@subhayatra')
+  const [password, setPassword] = useState('subhayatra@admin')
   const [isLoading, setIsLoading] = useState(false)
   const [formError, setFormError] = useState('')
 

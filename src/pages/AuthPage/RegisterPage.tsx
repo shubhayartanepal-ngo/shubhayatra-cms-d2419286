@@ -13,7 +13,6 @@ import { errorHandler } from '../../common/errorHandler'
 function RegisterPage() {
   const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(false)
-  const [formError, setFormError] = useState('')
   const [formData, setFormData] = useState({
     userName: '',
     email: '',
@@ -42,11 +41,9 @@ function RegisterPage() {
       !formData.address.trim() ||
       !formData.gender
     ) {
-      setFormError('Please fill in all required fields')
       return
     }
 
-    setFormError('')
     setIsLoading(true)
 
     try {
@@ -63,7 +60,6 @@ function RegisterPage() {
       navigate('/login')
     } catch (error) {
       const message = errorHandler(error)
-      setFormError(message)
       toast.error(message)
     } finally {
       setIsLoading(false)

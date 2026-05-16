@@ -10,7 +10,6 @@ import { errorHandler } from '../../common/errorHandler'
 function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [formError, setFormError] = useState('')
 
   const isFormValid = email.trim().length > 0
 
@@ -18,11 +17,9 @@ function ForgotPasswordPage() {
     event.preventDefault()
 
     if (!email.trim()) {
-      setFormError('Email is required')
       return
     }
 
-    setFormError('')
     setIsLoading(true)
 
     try {
@@ -30,7 +27,6 @@ function ForgotPasswordPage() {
       toast.success('Reset link sent to your email')
     } catch (error) {
       const message = errorHandler(error)
-      setFormError(message)
       toast.error(message)
     } finally {
       setIsLoading(false)

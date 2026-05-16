@@ -4,6 +4,7 @@ import { Link } from 'react-router'
 import AuthPageShell from '../../components/auth/AuthPageShell'
 import Button from '../../components/ui/button/Button'
 import InputField from '../../components/form/input/InputField'
+import AlertBox from '../../components/common/AlertBox'
 import authService from '../../services/authService'
 import { errorHandler } from '../../common/errorHandler'
 
@@ -94,12 +95,7 @@ function ResetPasswordPage() {
           onChange={(event) => setNewPassword(event.target.value)}
           required
         />
-        {/* 
-        {formError && (
-          <p className="rounded-[0.65rem] border border-red-200 bg-red-50 px-3.5 py-2 text-sm text-red-600" aria-live="polite">
-            {formError}
-          </p>
-        )} */}
+        <AlertBox message={formError} type="error" />
 
         <Button
           className="w-full"

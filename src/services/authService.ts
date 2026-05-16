@@ -1,9 +1,11 @@
 import apiClient from '../common/apiClient'
 
 import type {
+  ChangePasswordPayload,
   ForgotPasswordPayload,
   LoginPayload,
   RegisterPayload,
+  ResendTokenPayload,
   ResetPasswordPayload,
 } from '../interfaces/authInterface'
 
@@ -23,6 +25,14 @@ const authService = {
 
   forgotPassword: async (payload: ForgotPasswordPayload) => {
     const response = await apiClient.post('/auth/forgot-password', null, {
+      params: { email: payload.email },
+    })
+
+    return response.data
+  },
+
+  resendToken: async (payload: ResendTokenPayload) => {
+    const response = await apiClient.get('/auth/resend-token', {
       params: { email: payload.email },
     })
 
@@ -52,6 +62,11 @@ const authService = {
 
   resetPassword: async (payload: ResetPasswordPayload) => {
     const response = await apiClient.post('/auth/reset-password', payload)
+    return response.data
+  },
+
+  changePassword: async (payload: ChangePasswordPayload) => {
+    const response = await apiClient.post('/auth/change-password', payload)
     return response.data
   },
 }

@@ -1,58 +1,77 @@
-import React from "react";
-import { LayoutDashboard, FileText, Users, Image, Calendar, Settings, User } from "lucide-react";
+import React from 'react'
+import {
+  Calendar,
+  FileText,
+  IdCard,
+  Image,
+  LayoutDashboard,
+  Settings,
+  User,
+  Users,
+} from 'lucide-react'
 // import { USER_ROLES } from "../enums/UserRole.enum";
 
 export type SubNavItem = {
-  icon?: React.ReactNode;
-  name: string;
-  path: string;
-  new?: boolean;
-  pro?: boolean;
-};
+  icon?: React.ReactNode
+  name: string
+  path: string
+  new?: boolean
+  pro?: boolean
+}
 
 export type NavItem = {
-  name: string;
-  icon?: React.ReactNode;
-  path?: string;
-  subItems?: SubNavItem[];
-};
+  name: string
+  icon?: React.ReactNode
+  path?: string
+  subItems?: SubNavItem[]
+}
 
 export const navItems: NavItem[] = [
   {
-    name: "Dashboard",
+    name: 'Dashboard',
     icon: <LayoutDashboard size={18} />,
-    path: "/dashboard",
+    path: '/dashboard',
   },
   {
-    name: "Pages",
+    name: 'Pages',
     icon: <FileText size={18} />,
     subItems: [
       {
-        name: "Members",
+        name: 'Members',
         icon: <Users size={16} />,
-        path: "/members",
+        path: '/members',
       },
       {
-        name: "Hero Section",
+        name: 'Gallery',
         icon: <Image size={16} />,
-        path: "/",
+        path: '/gallery',
       },
       {
-        name: "Events",
+        name: 'Team Settings',
+        icon: <IdCard size={16} />,
+        path: '/team-settings',
+      },
+      {
+        name: 'Hero Section',
+        icon: <Image size={16} />,
+        path: '/',
+      },
+      {
+        name: 'Events',
         icon: <Calendar size={16} />,
-        path: "/",
+        path: '/',
       },
     ],
   },
   {
-    name: "Setting",
+    name: 'Setting',
     icon: <Settings size={18} />,
     subItems: [
       {
-        name: "Profile",
+        name: 'Profile',
         icon: <User size={16} />,
-        path: "/",
+        path: '/profile',
       },
     ],
   },
-];
+]

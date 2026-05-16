@@ -102,7 +102,7 @@ const AppSidebar: React.FC = () => {
                       : ''
                   }`}
                 >
-                  <img src={ChevronDownIcon} alt="down" className="w-5 h-5" />
+                  <img src={ChevronDownIcon} alt="down" className="w-5 h-5 brightness-200 invert" />
                 </span>
               )}
             </button>

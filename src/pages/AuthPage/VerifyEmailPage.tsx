@@ -1,13 +1,18 @@
-import { useEffect, useState } from 'react'
+import { type FormEvent, useEffect, useState } from 'react'
+import toast from 'react-hot-toast'
 import { Link } from 'react-router'
 import AuthPageShell from '../../components/auth/AuthPageShell'
 import Button from '../../components/ui/button/Button'
+import InputField from '../../components/form/input/InputField'
 import authService from '../../services/authService'
 import { errorHandler } from '../../common/errorHandler'
 
 function VerifyEmailPage() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
   const [message, setMessage] = useState('Verifying your email...')
+  const [resendEmail, setResendEmail] = useState('')
+  const [isResending, setIsResending] = useState(false)
+  const [resendError, setResendError] = useState('')
 
   useEffect(() => {
     const verify = async () => {
@@ -32,6 +37,29 @@ function VerifyEmailPage() {
 
     void verify()
   }, [])
+
+  const handleResendToken = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    if (!resendEmail.trim()) {
+      setResendError('Email is required')
+      return
+    }
+
+    setIsResending(true)
+    setResendError('')
+
+    try {
+      await authService.resendToken({ email: resendEmail.trim() })
+      toast.success('Verification link sent to your email')
+    } catch (error) {
+      const errorMessage = errorHandler(error)
+      setResendError(errorMessage)
+      toast.error(errorMessage)
+    } finally {
+      setIsResending(false)
+    }
+  }
 
   return (
     <AuthPageShell
@@ -69,6 +97,31 @@ function VerifyEmailPage() {
             Go to Login
           </Button>
         )}
+
+        {status === 'error' ? (
+          <form
+            className="grid gap-4 rounded-xl border border-slate-200 p-4"
+            onSubmit={handleResendToken}
+            noValidate
+          >
+            <InputField
+              label="Resend verification email"
+              id="resend-token-email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              placeholder="Enter your email address"
+              value={resendEmail}
+              onChange={(event) => setResendEmail(event.target.value)}
+              error={Boolean(resendError)}
+              hint={resendError || undefined}
+              required
+            />
+            <Button type="submit" className="w-full" disabled={isResending || !resendEmail.trim()}>
+              {isResending ? 'Sending...' : 'Resend verification link'}
+            </Button>
+          </form>
+        ) : null}
       </div>
     </AuthPageShell>
   )

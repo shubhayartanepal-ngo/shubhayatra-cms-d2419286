@@ -1,11 +1,18 @@
-
 import { Navigate, Route, Routes } from 'react-router'
 import LoginPage from './pages/AuthPage/LoginPage.tsx'
-import DashboardPage from './pages/AuthPage/DashboardPage'
+import DashboardPage from './pages/Dashboard/DashboardPage.tsx'
+import GalleryPage from './pages/Gallery/GalleryPage.tsx'
+
 import RegisterPage from './pages/AuthPage/RegisterPage.tsx'
 import ForgotPasswordPage from './pages/AuthPage/ForgotPasswordPage.tsx'
 import VerifyEmailPage from './pages/AuthPage/VerifyEmailPage.tsx'
 import ResetPasswordPage from './pages/AuthPage/ResetPasswordPage.tsx'
+import AuthGuard from './guard/AuthGuard.tsx'
+import AppLayout from './layout/AppLayout.tsx'
+import MemberPage from './pages/Members/MemberPage.tsx'
+
+import TeamLookupsPage from './pages/Members/TeamLookupsPage.tsx'
+import ProfilePage from './pages/Profile/ProfilePage.tsx'
 
 function App() {
   return (
@@ -16,7 +23,19 @@ function App() {
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
       <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
-      <Route path="/dashboard" element={<DashboardPage />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
+
+      <Route element={<AuthGuard />}>
+        {/* Protected routes go here */}
+        <Route element={<AppLayout />}>
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/members" element={<MemberPage />} />
+          <Route path="/gallery" element={<GalleryPage />} />
+
+          <Route path="/team-settings" element={<TeamLookupsPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+        </Route>
+      </Route>
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   )

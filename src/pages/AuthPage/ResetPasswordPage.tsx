@@ -4,6 +4,7 @@ import { Link } from 'react-router'
 import AuthPageShell from '../../components/auth/AuthPageShell'
 import Button from '../../components/ui/button/Button'
 import InputField from '../../components/form/input/InputField'
+import AlertBox from '../../components/common/AlertBox'
 import authService from '../../services/authService'
 import { errorHandler } from '../../common/errorHandler'
 
@@ -12,6 +13,8 @@ function ResetPasswordPage() {
   const [newPassword, setNewPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [formError, setFormError] = useState('')
+
+  const isFormValid = token.trim() !== '' && newPassword.trim() !== ''
 
   useEffect(() => {
     const search = new URLSearchParams(window.location.search)
@@ -77,25 +80,28 @@ function ResetPasswordPage() {
         /> */}
 
         <InputField
-          label="New password"
+          label={
+            <span>
+              New Password <span className="text-red-500">*</span>
+            </span>
+          }
           id="new-password"
           name="newPassword"
           type="password"
           showPasswordToggle
           autoComplete="new-password"
-          placeholder="NewStrongPass1@"
+          placeholder="Enter a new password"
           value={newPassword}
           onChange={(event) => setNewPassword(event.target.value)}
           required
         />
+        <AlertBox message={formError} type="error" />
 
-        {formError && (
-          <p className="rounded-[0.65rem] border border-red-200 bg-red-50 px-3.5 py-2 text-sm text-red-600" aria-live="polite">
-            {formError}
-          </p>
-        )}
-
-        <Button className="w-full" type="submit" disabled={isLoading}>
+        <Button
+          className="w-full"
+          type="submit"
+          disabled={!isFormValid || isLoading}
+        >
           {isLoading ? 'Resetting...' : 'Reset password'}
         </Button>
       </form>

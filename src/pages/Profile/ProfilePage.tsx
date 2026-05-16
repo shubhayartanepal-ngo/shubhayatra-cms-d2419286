@@ -49,17 +49,6 @@ const formatRoles = (roles: JwtClaims['roles'] | JwtClaims['role']) => {
   return roles || 'Admin'
 }
 
-const formatDate = (timestamp?: number) => {
-  if (!timestamp) {
-    return 'Not available'
-  }
-
-  return new Intl.DateTimeFormat('en', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(timestamp * 1000))
-}
-
 function ProfilePage() {
   const token = getStoredAuthToken()
   const claims = useMemo(() => decodeTokenClaims(token), [token])

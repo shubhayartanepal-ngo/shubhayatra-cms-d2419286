@@ -1,5 +1,8 @@
 import type { ChangeEvent, FormEvent } from 'react'
 
+import { ExternalLink } from 'lucide-react'
+import { Link } from 'react-router'
+
 import Button from '../ui/button/Button'
 import Modal from '../ui/modal/Modal'
 
@@ -33,6 +36,7 @@ type TeamMemberModalProps = {
   onFieldChange: <K extends keyof TeamFormState>(field: K, value: TeamFormState[K]) => void
   onToggleDesignation: (designationId: string) => void
   onImageChange: (event: ChangeEvent<HTMLInputElement>) => void
+  onRefreshOptions: () => void
 }
 
 function TeamMemberModal({
@@ -51,6 +55,7 @@ function TeamMemberModal({
   onFieldChange,
   onToggleDesignation,
   onImageChange,
+  onRefreshOptions,
 }: TeamMemberModalProps) {
   const isEditMode = editingTeamId !== null
   const isCloseDisabled = isSaving || isLoadingTeam || isUploading
@@ -58,11 +63,11 @@ function TeamMemberModal({
   return (
     <Modal
       isOpen={isOpen}
-      title={isEditMode ? 'Edit Team' : 'Add Team'}
+      title={isEditMode ? 'Edit Team Member' : 'Add Team Member'}
       description={
         isEditMode
-          ? 'Update the team record using IDs only in the request body.'
-          : 'Create a new team record with the required JSON payload.'
+          ? 'Update team member details, roles, social links, and profile image.'
+          : 'Add a new team member with role, social links, and profile image.'
       }
       onClose={onClose}
       closeDisabled={isCloseDisabled}
@@ -92,7 +97,17 @@ function TeamMemberModal({
             </label>
 
             <label className="space-y-2">
-              <span className="text-sm font-medium text-slate-700">Honorific</span>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-slate-700">Honorific</span>
+                <div className="flex items-center gap-3">
+                  <button type="button" onClick={onRefreshOptions} className="text-xs text-slate-500 hover:text-brand-blue" title="Refresh honorifics">
+                    Refresh
+                  </button>
+                  <Link to="/team-settings" target="_blank" className="inline-flex items-center gap-1 text-xs font-medium text-brand-blue hover:underline">
+                    Add new <ExternalLink size={12} />
+                  </Link>
+                </div>
+              </div>
               <select
                 required
                 value={formState.honorificId}
@@ -110,7 +125,17 @@ function TeamMemberModal({
             </label>
 
             <div className="space-y-2 md:col-span-2">
-              <span className="text-sm font-medium text-slate-700">Designations</span>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-slate-700">Designations</span>
+                <div className="flex items-center gap-3">
+                  <button type="button" onClick={onRefreshOptions} className="text-xs text-slate-500 hover:text-brand-blue" title="Refresh designations">
+                    Refresh
+                  </button>
+                  <Link to="/team-settings" target="_blank" className="inline-flex items-center gap-1 text-xs font-medium text-brand-blue hover:underline">
+                    Add new <ExternalLink size={12} />
+                  </Link>
+                </div>
+              </div>
               <div className="grid gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 sm:grid-cols-2 lg:grid-cols-4">
                 {designationOptions.map((option) => (
                   <label
@@ -134,12 +159,11 @@ function TeamMemberModal({
               <span className="text-sm font-medium text-slate-700">Twitter Link</span>
               <input
                 type="url"
-                required
                 value={formState.teamTwitterLink}
                 onChange={(event) => onFieldChange('teamTwitterLink', event.target.value)}
                 disabled={isSaving || isUploading}
                 className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/10 disabled:cursor-not-allowed disabled:bg-slate-50"
-                placeholder="https://www.example.com"
+                placeholder="https://twitter.com/username"
               />
             </label>
 
@@ -147,12 +171,11 @@ function TeamMemberModal({
               <span className="text-sm font-medium text-slate-700">LinkedIn Link</span>
               <input
                 type="url"
-                required
                 value={formState.teamLinkedInLink}
                 onChange={(event) => onFieldChange('teamLinkedInLink', event.target.value)}
                 disabled={isSaving || isUploading}
                 className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/10 disabled:cursor-not-allowed disabled:bg-slate-50"
-                placeholder="https://www.example.com"
+                placeholder="https://linkedin.com/in/username"
               />
             </label>
 
@@ -160,33 +183,32 @@ function TeamMemberModal({
               <span className="text-sm font-medium text-slate-700">Facebook Link</span>
               <input
                 type="url"
-                required
                 value={formState.teamFacebookLink}
                 onChange={(event) => onFieldChange('teamFacebookLink', event.target.value)}
                 disabled={isSaving || isUploading}
                 className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/10 disabled:cursor-not-allowed disabled:bg-slate-50"
-                placeholder="https://www.example.com"
+                placeholder="https://facebook.com/username"
               />
             </label>
           </div>
 
           <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4">
-            <div className="space-y-2">
+            <div className="space-y-2"> 
               <label className="flex-1 space-y-2">
-                <span className="text-sm font-medium text-slate-700">Select an image</span>
+                <span className="text-sm font-medium text-slate-700">Profile image</span>
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/png,image/jpeg,image/jpg"
                   onChange={onImageChange}
                   disabled={isSaving || isUploading}
                   className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition file:mr-4 file:rounded-md file:border-0 file:bg-brand-blue file:px-3 file:py-2 file:text-sm file:font-medium file:text-white disabled:cursor-not-allowed disabled:bg-slate-50"
                 />
               </label>
             </div>
-{/* 
+                
             {selectedImage ? (
               <p className="mt-3 text-sm text-slate-600">Selected: {selectedImage.name}</p>
-            ) : null} */}
+            ) : null}
           </div>
 
           <div className="flex justify-end gap-3 border-t border-slate-200 pt-4">

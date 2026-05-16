@@ -1,17 +1,22 @@
-import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useCallback, useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
 import toast from 'react-hot-toast'
 
 import TeamMemberModal, {
   type LookupOption,
   type TeamFormState,
 } from '../../components/members/TeamMemberModal'
+import { DeleteActionButton, EditActionButton } from '../../components/ui/button/ActionButtons'
 import Button from '../../components/ui/button/Button'
+import AlertBox from '../../components/common/AlertBox'
+import ImageCell from '../../components/common/ImageCell'
+import ConfirmDialog from '../../components/common/ConfirmDialog'
 import teamService, {
   type DesignationRecord,
   type HonorificRecord,
   type TeamPayload,
   type TeamRecord,
 } from '../../services/teamService'
+import { Plus } from 'lucide-react'
 
 const fallbackHonorificOptions = [
   { id: 1, label: 'Mr.' },
@@ -46,7 +51,6 @@ const defaultFormState: TeamFormState = {
   honorificId: '',
   designationIds: [],
 }
-
 
 const normalize = (value: string) => value.trim().toLowerCase()
 
@@ -104,9 +108,15 @@ const buildFormStateFromTeam = (
 
 const buildPayload = (formState: TeamFormState): TeamPayload => ({
   teamName: formState.teamName.trim(),
-  teamTwitterLink: formState.teamTwitterLink.trim(),
-  teamLinkedInLink: formState.teamLinkedInLink.trim(),
-  teamFacebookLink: formState.teamFacebookLink.trim(),
+  ...(formState.teamTwitterLink.trim() && {
+    teamTwitterLink: formState.teamTwitterLink.trim(),
+  }),
+  ...(formState.teamLinkedInLink.trim() && {
+    teamLinkedInLink: formState.teamLinkedInLink.trim(),
+  }),
+  ...(formState.teamFacebookLink.trim() && {
+    teamFacebookLink: formState.teamFacebookLink.trim(),
+  }),
   honorific: {
     honorificId: Number(formState.honorificId),
   },
@@ -115,13 +125,13 @@ const buildPayload = (formState: TeamFormState): TeamPayload => ({
   })),
 })
 
-const resolveTeamProfilePic = (team: TeamRecord) =>
-  team.teamProfilePic ?? team.teamProfilePic ?? team.imageUrl ?? team.profileImage ?? ''
+
+
 
 const mapTeamRecordToRow = (team: TeamRecord): TeamRow => ({
   teamId: Number(team.teamId ?? team.id ?? 0),
   teamName: team.teamName ?? 'Untitled',
-  teamProfilePic: resolveTeamProfilePic(team),
+  teamProfilePic: team.teamProfilePic ?? team.profileImage ?? team.profileImageUrl ?? "",
   honorificLabel:
     team.honorific?.honorificTitle ?? team.honorific?.title ?? team.honorific?.name ?? 'Unknown',
   designationLabels:
@@ -175,9 +185,26 @@ function MemberPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [deletingTeamId, setDeletingTeamId] = useState<number | null>(null)
+  const [pendingDeleteTeamId, setPendingDeleteTeamId] = useState<number | null>(null)
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [pageError, setPageError] = useState<string | null>(null)
+
+  const resetModalState = useCallback(() => {
+    setIsModalOpen(false)
+    setEditingTeamId(null)
+    setFormState(defaultFormState)
+    setSelectedImage(null)
+    setFormError(null)
+  }, [])
+
+  const closeModal = useCallback(() => {
+    if (isSaving || isLoadingTeam || isUploading) {
+      return
+    }
+
+    resetModalState()
+  }, [isLoadingTeam, isSaving, isUploading, resetModalState])
 
   const loadTeams = async () => {
     setIsLoadingTeams(true)
@@ -185,7 +212,8 @@ function MemberPage() {
 
     try {
       const teamRecords = await teamService.listTeams()
-      console.log(`${import.meta.env.VITE_API_IMAGE_URL}${teamRecords[0].teamProfilePic}`);
+
+    
       setTeams(teamRecords.map(mapTeamRecordToRow))
     } catch {
       setPageError('Unable to load teams right now.')
@@ -224,6 +252,10 @@ function MemberPage() {
     }
   }
 
+  const handleRefreshOptions = useCallback(() => {
+    void loadHonorifics()
+    void loadDesignations()
+  }, [])
   useEffect(() => {
     void loadTeams()
     void loadHonorifics()
@@ -244,15 +276,7 @@ function MemberPage() {
     window.addEventListener('keydown', handleEscape)
 
     return () => window.removeEventListener('keydown', handleEscape)
-  }, [isModalOpen])
-
-  const resetModalState = () => {
-    setIsModalOpen(false)
-    setEditingTeamId(null)
-    setFormState(defaultFormState)
-    setSelectedImage(null)
-    setFormError(null)
-  }
+  }, [closeModal, isModalOpen])
 
   const openCreateModal = () => {
     setEditingTeamId(null)
@@ -280,14 +304,6 @@ function MemberPage() {
     }
   }
 
-  const closeModal = () => {
-    if (isSaving || isLoadingTeam || isUploading) {
-      return
-    }
-
-    resetModalState()
-  }
-
   const toggleDesignation = (designationId: string) => {
     setFormState((current) => ({
       ...current,
@@ -311,21 +327,6 @@ function MemberPage() {
 
     if (!formState.honorificId) {
       setFormError('Honorific is required.')
-      return
-    }
-
-    if (!formState.teamTwitterLink.trim()) {
-      setFormError('Twitter link is required.')
-      return
-    }
-
-    if (!formState.teamLinkedInLink.trim()) {
-      setFormError('LinkedIn link is required.')
-      return
-    }
-
-    if (!formState.teamFacebookLink.trim()) {
-      setFormError('Facebook link is required.')
       return
     }
 
@@ -385,25 +386,30 @@ function MemberPage() {
     setSelectedImage(event.target.files?.[0] ?? null)
   }
 
-  const handleDeleteTeam = async (teamId: number) => {
-    const team = teams.find((entry) => entry.teamId === teamId)
+  const handleDeleteTeam = async () => {
+    if (pendingDeleteTeamId === null) return
 
-    if (!window.confirm(`Delete ${team?.teamName ?? 'this team'}?`)) {
-      return
-    }
-
-    setDeletingTeamId(teamId)
+    setDeletingTeamId(pendingDeleteTeamId)
     setPageError(null)
 
     try {
-      await teamService.deleteTeam(teamId)
-      setTeams((currentTeams) => currentTeams.filter((entry) => entry.teamId !== teamId))
+      await teamService.deleteTeam(pendingDeleteTeamId)
+      setTeams((currentTeams) => currentTeams.filter((entry) => entry.teamId !== pendingDeleteTeamId))
       toast.success('Team deleted successfully')
     } catch {
       setPageError('Failed to delete team.')
     } finally {
       setDeletingTeamId(null)
+      setPendingDeleteTeamId(null)
     }
+  }
+
+  const openDeleteConfirm = (teamId: number) => {
+    setPendingDeleteTeamId(teamId)
+  }
+
+  const closeDeleteConfirm = () => {
+    setPendingDeleteTeamId(null)
   }
 
   return (
@@ -412,12 +418,12 @@ function MemberPage() {
         <div>
           <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Team Members</h1>
           <p className="max-w-2xl text-sm text-slate-500">
-            Manage team records, including the JSON payload for create and update requests.
+            Manage team member details, roles, social links, and profile images.
           </p>
         </div>
 
         <div className="flex items-center justify-end">
-          <Button type="button" variant="primary" onClick={openCreateModal}>
+          <Button type="button" variant="primary"   size="sm"  startIcon={<Plus size={16} />} onClick={openCreateModal}>
             Add Team
           </Button>
         </div>
@@ -439,6 +445,7 @@ function MemberPage() {
         onFieldChange={handleFieldChange}
         onToggleDesignation={toggleDesignation}
         onImageChange={handleImageChange}
+        onRefreshOptions={handleRefreshOptions}
       />
 
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -452,11 +459,7 @@ function MemberPage() {
           </span>
         </div>
 
-        {pageError && (
-          <div className="border-b border-amber-200 bg-amber-50 px-6 py-3 text-sm text-amber-800">
-            {pageError}
-          </div>
-        )}
+        {pageError && <AlertBox message={pageError} type="error" />}
 
         {isLoadingTeams ? (
           <div className="px-6 py-10 text-sm text-slate-500">Loading teams...</div>
@@ -481,22 +484,15 @@ function MemberPage() {
                 {teams.map((team) => (
                   <tr key={team.teamId} className="hover:bg-slate-50/80">
                     <td className="px-6 py-4">
-
-
-
-
-                      {team.teamProfilePic ? (
-
-                        <img
-                          src={`${import.meta.env.VITE_API_IMAGE_URL}/${team.teamProfilePic}`}
-                          alt={team.teamName}
-                          className="h-12 w-12 rounded-lg object-cover ring-1 ring-slate-200"
-                        />
-                      ) : (
-                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-slate-100 text-xs font-medium text-slate-500 ring-1 ring-slate-200">
-                          N/A
-                        </div>
-                      )}
+                      <ImageCell
+                        src={
+                          team.teamProfilePic
+                            ? `${import.meta.env.VITE_API_IMAGE_URL}${team.teamProfilePic}`
+                            : undefined
+                        }
+                        alt={team.teamName}
+                        size="md"
+                      />
                     </td>
                     <td className="px-6 py-4 font-medium text-slate-900">{team.teamName}</td>
                     <td className="px-6 py-4 text-slate-600">{team.honorificLabel}</td>
@@ -520,24 +516,15 @@ function MemberPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
+                        <EditActionButton
                           onClick={() => void openEditModal(team.teamId)}
                           disabled={deletingTeamId === team.teamId}
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={() => void handleDeleteTeam(team.teamId)}
+                        />
+                        <DeleteActionButton
+                          onClick={() => void openDeleteConfirm(team.teamId)}
                           disabled={deletingTeamId === team.teamId}
-                        >
-                          {deletingTeamId === team.teamId ? 'Deleting...' : 'Delete'}
-                        </Button>
+                          isDeleting={deletingTeamId === team.teamId}
+                        />
                       </div>
                     </td>
                   </tr>
@@ -547,6 +534,18 @@ function MemberPage() {
           </div>
         )}
       </section>
+
+      <ConfirmDialog
+        isOpen={pendingDeleteTeamId !== null}
+        title="Delete Team Member"
+        message={`Are you sure you want to delete "${teams.find((team) => team.teamId === pendingDeleteTeamId)?.teamName || 'this team'}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDestructive={true}
+        isLoading={deletingTeamId !== null}
+        onConfirm={handleDeleteTeam}
+        onCancel={closeDeleteConfirm}
+      />
     </main>
   )
 }

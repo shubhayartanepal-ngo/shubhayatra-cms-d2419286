@@ -1,6 +1,7 @@
 import React from 'react'
 import { Image as ImageIcon, Trash2, Video } from 'lucide-react'
 import type { GalleryItem } from '../../services/galleryService'
+import { getGalleryMediaUrl } from '../../common/mediaUrl'
 
 interface GalleryMediaCardProps {
   item: GalleryItem
@@ -9,7 +10,7 @@ interface GalleryMediaCardProps {
 }
 
 const GalleryMediaCard: React.FC<GalleryMediaCardProps> = ({ item, isDeleting, onDelete }) => {
-  const imageUrl = `${import.meta.env.VITE_API_IMAGE_URL}uploads/${item.filePath}`
+  const imageUrl = getGalleryMediaUrl(item.filePath)
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">

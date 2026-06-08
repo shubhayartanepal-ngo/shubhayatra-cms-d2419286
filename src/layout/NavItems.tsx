@@ -1,75 +1,134 @@
 import React from 'react'
 import {
+  Building2,
   Calendar,
   FileText,
-  IdCard,
   Image,
+  Landmark,
   LayoutDashboard,
+  Newspaper,
+  Search,
   Settings,
+  Sprout,
   User,
   Users,
+  UsersRound,
 } from 'lucide-react'
 // import { USER_ROLES } from "../enums/UserRole.enum";
 
-export type SubNavItem = {
+export type SidebarItem = {
   icon?: React.ReactNode
   name: string
-  path: string
+  path?: string
   new?: boolean
   pro?: boolean
 }
 
-export type NavItem = {
+export type SidebarSection = {
   name: string
-  icon?: React.ReactNode
-  path?: string
-  subItems?: SubNavItem[]
+  description?: string
+  items: SidebarItem[]
 }
 
-export const navItems: NavItem[] = [
+export const sidebarSections: SidebarSection[] = [
   {
-    name: 'Dashboard',
-    icon: <LayoutDashboard size={18} />,
-    path: '/dashboard',
+    name: 'MAIN',
+    items: [
+      {
+        name: 'Dashboard',
+        icon: <LayoutDashboard size={18} />,
+        path: '/dashboard',
+      },
+    ],
   },
   {
-    name: 'Pages',
-    icon: <FileText size={18} />,
-    subItems: [
+    name: 'CORE CONTENT',
+    description: 'Manage the mission',
+    items: [
+      {
+        name: 'Initiatives',
+        icon: <Sprout size={16} />,
+      },
+      {
+        name: 'Heritage Sites',
+        icon: <Landmark size={16} />,
+      },
+      {
+        name: 'News & Blog',
+        icon: <Newspaper size={16} />,
+        path: '/news',
+      },
+      {
+        name: 'Our Moral & Values',
+        icon: <FileText size={16} />,
+        path: '/our-moral-values',
+        new: true,
+      },
+    ],
+  },
+  {
+    name: 'COMMUNITY',
+    description: 'Manage the people',
+    items: [
       {
         name: 'Members',
         icon: <Users size={16} />,
         path: '/members',
       },
       {
+        name: 'Volunteers',
+        icon: <UsersRound size={16} />,
+      },
+      {
+        name: 'Partners',
+        icon: <Building2 size={16} />,
+      },
+    ],
+  },
+  {
+    name: 'SITE ASSETS',
+    description: 'Manage the visuals',
+    items: [
+      {
         name: 'Gallery',
         icon: <Image size={16} />,
         path: '/gallery',
       },
       {
-        name: 'Team Settings',
-        icon: <IdCard size={16} />,
-        path: '/team-settings',
+        name: 'Documents',
+        icon: <FileText size={16} />,
       },
       {
         name: 'Hero Section',
         icon: <Image size={16} />,
-        path: '/',
-      },
-      {
-        name: 'Events',
-        icon: <Calendar size={16} />,
-        path: '/',
+        path: '/hero-section',
       },
     ],
   },
   {
-    name: 'Setting',
-    icon: <Settings size={18} />,
-    subItems: [
+    name: 'ACTIVITIES',
+    items: [
       {
-        name: 'Profile',
-        icon: <User size={16} />,
+        name: 'Events',
+        icon: <Calendar size={16} />,
+      },
+      {
+        name: 'Inquiries',
+        icon: <Search size={16} />,
+      },
+    ],
+  },
+  {
+    name: 'SETTINGS',
+    items: [
+      {
+        name: 'Team Settings',
+        icon: <Settings size={18} />,
+        path: '/team-settings',
+      },
+      {
+        name: 'Profile Settings',
+        icon: <User size={18} />,
         path: '/profile',
       },
     ],

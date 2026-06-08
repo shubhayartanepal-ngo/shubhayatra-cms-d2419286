@@ -11,6 +11,7 @@ import PreviewGrid from '../../components/gallery/PreviewGrid.tsx'
 import FormFields from '../../components/gallery/FormFields.tsx'
 import AlertBox from '../../components/common/AlertBox.tsx'
 import EmptyState from '../../components/common/EmptyState.tsx'
+import { getGalleryMediaUrl } from '../../common/mediaUrl'
 
 import ConfirmDialog from '../../components/common/ConfirmDialog.tsx'
 
@@ -34,6 +35,9 @@ const GalleryPage: React.FC = () => {
   const [galleryError, setGalleryError] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | number | null>(null)
   const [pendingDeleteId, setPendingDeleteId] = useState<string | number | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [pendingBulkDelete, setPendingBulkDelete] = useState(false)
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false)
   
   // Search and Filter states
   const [searchQuery, setSearchQuery] = useState('')
@@ -280,6 +284,49 @@ const GalleryPage: React.FC = () => {
     setPendingDeleteId(id)
   }
 
+  const toggleSelectItem = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const selectAllInGroup = (items: GalleryItem[]) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      items.forEach((it) => next.add(String(it.id)))
+      return next
+    })
+  }
+
+  const deselectAllInGroup = (items: GalleryItem[]) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      items.forEach((it) => next.delete(String(it.id)))
+      return next
+    })
+  }
+
+  const openBulkDeleteConfirm = () => setPendingBulkDelete(true)
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return
+    setIsBulkDeleting(true)
+    try {
+      await Promise.all(Array.from(selectedIds).map((id) => galleryService.deleteGalleryItem(id)))
+      toast.success('Selected items deleted')
+      await loadGalleryItems()
+      setSelectedIds(new Set())
+    } catch (error) {
+      toast.error(errorHandler(error))
+    } finally {
+      setIsBulkDeleting(false)
+      setPendingBulkDelete(false)
+    }
+  }
+
   const closeDeleteConfirm = () => {
     setPendingDeleteId(null)
   }
@@ -369,6 +416,7 @@ const GalleryPage: React.FC = () => {
         <EmptyState message="No gallery items yet. Start by uploading your first image or video." />
       ) : (
         <div className="space-y-10">
+
           {sortedGroupedGalleryItems.map(([title, items]) => (
             <div key={title} className="space-y-4">
               <div className="flex items-center gap-3 border-b border-slate-200 pb-2">
@@ -382,6 +430,30 @@ const GalleryPage: React.FC = () => {
                 >
                   <Pencil size={14} />
                 </button>
+                <div className="ml-auto flex flex-wrap items-center gap-3 text-sm">
+                  <button
+                    type="button"
+                    className="rounded-md border px-3 py-1 text-sm transition hover:bg-slate-100"
+                    onClick={() => selectAllInGroup(items)}
+                  >
+                    Select all
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-md border px-3 py-1 text-sm transition hover:bg-slate-100"
+                    onClick={() => deselectAllInGroup(items)}
+                  >
+                    Deselect all
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-md border border-brand-red bg-brand-red/5 px-3 py-1 text-sm text-brand-red transition hover:bg-brand-red/10 disabled:cursor-not-allowed disabled:opacity-60"
+                    onClick={openBulkDeleteConfirm}
+                    disabled={selectedIds.size === 0}
+                  >
+                    Delete selected {selectedIds.size > 0 ? `(${selectedIds.size})` : ''}
+                  </button>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
                 {items.map((item) => (
@@ -390,9 +462,17 @@ const GalleryPage: React.FC = () => {
                     className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
                   >
                     <div className="relative">
+                      <label className="absolute left-2 top-2 z-20 inline-flex items-center justify-center rounded-md bg-white/70 p-1">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(String(item.id))}
+                          onChange={() => toggleSelectItem(String(item.id))}
+                          className="h-4 w-4 rounded"
+                        />
+                      </label>
                       {item.mediaType === 'VIDEO' ? (
                         <video
-                          src={`${import.meta.env.VITE_API_IMAGE_URL}uploads/${item.filePath}`}
+                          src={getGalleryMediaUrl(item.filePath)}
                           className="h-36 w-full object-cover transition-transform duration-300 hover:scale-105"
                           muted
                           playsInline
@@ -400,7 +480,7 @@ const GalleryPage: React.FC = () => {
                         />
                       ) : (
                         <img
-                          src={`${import.meta.env.VITE_API_IMAGE_URL}uploads/${item.filePath}`}
+                          src={getGalleryMediaUrl(item.filePath)}
                           alt={item.title}
                           className="h-36 w-full object-cover transition-transform duration-300 hover:scale-105"
                         />
@@ -495,6 +575,18 @@ const GalleryPage: React.FC = () => {
         isLoading={deletingId !== null}
         onConfirm={handleDeleteGalleryItem}
         onCancel={closeDeleteConfirm}
+      />
+
+      <ConfirmDialog
+        isOpen={pendingBulkDelete}
+        title="Delete selected items"
+        message={`Are you sure you want to delete ${selectedIds.size} selected item(s)? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDestructive={true}
+        isLoading={isBulkDeleting}
+        onConfirm={handleBulkDelete}
+        onCancel={() => setPendingBulkDelete(false)}
       />
 
       <Modal

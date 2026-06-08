@@ -42,11 +42,7 @@ const galleryService = {
       formData.append('title', payload.title)
       formData.append('type', 'IMAGE')
 
-      const response = await apiClient.post('/gallery/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      })
+      const response = await apiClient.post('/gallery/upload', formData)
       responses.push(response.data as GalleryUploadResponse)
     }
 
@@ -59,11 +55,7 @@ const galleryService = {
       formData.append('title', payload.title)
       formData.append('type', 'VIDEO')
 
-      const response = await apiClient.post('/gallery/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      })
+      const response = await apiClient.post('/gallery/upload', formData)
       responses.push(response.data as GalleryUploadResponse)
     }
 

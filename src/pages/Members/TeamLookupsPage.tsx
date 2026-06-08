@@ -156,20 +156,20 @@ function LookupSection({
         <div className="px-6 py-10 text-sm text-slate-500">{config.emptyMessage}</div>
       ) : (
         <div className="w-full overflow-x-auto">
-          <table className="w-full min-w-[36rem] divide-y divide-slate-200 text-left text-sm">
+          <table className="w-full min-w-[28rem] divide-y divide-slate-200 text-left text-sm">
             <thead className="bg-slate-50 text-slate-600">
               <tr>
-                <th className="px-6 py-3 font-medium">ID</th>
-                <th className="px-6 py-3 font-medium">{config.fieldLabel}</th>
-                <th className="px-6 py-3 text-right font-medium">Actions</th>
+                <th className="px-4 py-3 font-medium">ID</th>
+                <th className="px-4 py-3 font-medium">{config.fieldLabel}</th>
+                <th className="px-4 py-3 text-right font-medium">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 bg-white">
               {items.map((item) => (
                 <tr key={item.id} className="hover:bg-slate-50/80">
-                  <td className="px-6 py-4 text-slate-500">{item.id}</td>
-                  <td className="px-6 py-4 font-medium text-slate-900">{item.title}</td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-3 text-slate-500">{item.id}</td>
+                  <td className="px-4 py-3 font-medium text-slate-900">{item.title}</td>
+                  <td className="px-4 py-3 text-right text-sm">
                     <div className="flex justify-end gap-2">
                       <EditActionButton
                         onClick={() => onEdit(item)}
@@ -420,7 +420,7 @@ function TeamLookupsPage() {
         </p>
       </div>
 
-      <div className="grid gap-6 ">
+      <div className="grid gap-6 md:grid-cols-2">
         <LookupSection
           config={lookupConfigs.honorific}
           items={honorificItems}
@@ -461,7 +461,7 @@ function TeamLookupsPage() {
           description={`${modalState.mode === 'create' ? 'Create' : 'Update'} a ${activeConfig.fieldLabel.toLowerCase()} entry.`}
           onClose={closeModal}
           closeDisabled={saving}
-          maxWidthClassName="max-w-lg"
+          maxWidthClassName="max-w-lg"  
         >
           <form onSubmit={handleModalSubmit} className="space-y-5 px-6 py-6">
             {modalError ? (

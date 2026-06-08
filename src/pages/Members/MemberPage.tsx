@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useCallback, useEffect, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
 import toast from 'react-hot-toast'
+import { LayoutGrid, List } from 'lucide-react'
+import { FaFacebookF, FaLinkedinIn, FaTwitter } from 'react-icons/fa'
 
 import TeamMemberModal, {
   type LookupOption,
@@ -42,6 +44,8 @@ type TeamRow = {
   teamLinkedInLink: string
   teamFacebookLink: string
 }
+
+type TeamViewMode = 'grid' | 'list'
 
 const defaultFormState: TeamFormState = {
   teamName: '',
@@ -171,6 +175,89 @@ const mapDesignationRecordToOption = (designation: DesignationRecord): LookupOpt
   }
 }
 
+const getTeamImageSrc = (team: TeamRow) =>
+  team.teamProfilePic ? `${import.meta.env.VITE_API_IMAGE_URL}${team.teamProfilePic}` : undefined
+
+const TeamSocialLink = ({
+  href,
+  label,
+  children,
+}: {
+  href: string
+  label: string
+  children: ReactNode
+}) => {
+  if (!href) {
+    return null
+  }
+
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      aria-label={label}
+      className="inline-flex h-9 w-9 items-center justify-center rounded-md text-sky-500 transition hover:bg-slate-100 hover:text-sky-600"
+    >
+      {children}
+    </a>
+  )
+}
+
+const TeamCard = ({
+  team,
+  isDeleting,
+  onEdit,
+  onDelete,
+}: {
+  team: TeamRow
+  isDeleting: boolean
+  onEdit: () => void
+  onDelete: () => void
+}) => {
+  const imageSrc = getTeamImageSrc(team)
+
+  return (
+    <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-[0_1px_6px_rgba(15,23,42,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(15,23,42,0.12)]">
+      <div className="flex flex-1 flex-col items-center px-5 py-2 text-center">
+        <div className="relative mb-5 h-28 w-28 rounded-full bg-slate-100 p-1 shadow-sm ring-1 ring-slate-200">
+          <div className="h-full w-full overflow-hidden rounded-full bg-slate-100">
+            <img
+              src={imageSrc}
+              alt={team.teamName}
+              className="h-full w-full object-cover"
+              loading="lazy"
+            />
+          </div>
+        </div>
+
+        <p className="mt-1 text-base text-slate-600">{team.honorificLabel}</p>
+        <h3 className="text-[1.10rem] font-semibold leading-tight tracking-tight text-slate-900">
+          {team.teamName}
+        </h3>
+        <p className="mt-3 text-sm font-medium text-slate-900">{team.designationLabels[0] ?? '—'}</p>
+
+        <div className="mt-5 flex items-center justify-center gap-1.5">
+          <TeamSocialLink href={team.teamTwitterLink} label={`${team.teamName} on Twitter`}>
+            <FaTwitter size={18} className="text-[#1DA1F2] transition group-hover:scale-105" />
+          </TeamSocialLink>
+          <TeamSocialLink href={team.teamLinkedInLink} label={`${team.teamName} on LinkedIn`}>
+            <FaLinkedinIn size={18} className="text-[#0A66C2] transition group-hover:scale-105" />
+          </TeamSocialLink>
+          <TeamSocialLink href={team.teamFacebookLink} label={`${team.teamName} on Facebook`}>
+            <FaFacebookF size={18} className="text-[#1877F2] transition group-hover:scale-105" />
+          </TeamSocialLink>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-center gap-3 border-t border-slate-200 bg-slate-50 px-4 py-3">
+        <EditActionButton onClick={onEdit} disabled={isDeleting} />
+        <DeleteActionButton onClick={onDelete} disabled={isDeleting} isDeleting={isDeleting} />
+      </div>
+    </article>
+  )
+}
+
 function MemberPage() {
   const [honorificOptions, setHonorificOptions] = useState<LookupOption[]>(fallbackHonorificOptions)
   const [designationOptions, setDesignationOptions] = useState<LookupOption[]>(
@@ -189,6 +276,7 @@ function MemberPage() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [pageError, setPageError] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<TeamViewMode>('grid')
 
   const resetModalState = useCallback(() => {
     setIsModalOpen(false)
@@ -454,9 +542,44 @@ function MemberPage() {
             <h2 className="text-base font-semibold text-slate-900">Team List</h2>
             <p className="text-sm text-slate-500">{teams.length} records</p>
           </div>
-          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-            Updated today
-          </span>
+          <div className="flex items-center gap-3">
+            <div className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-1 shadow-sm">
+              <button
+                type="button"
+                onClick={() => setViewMode('list')}
+                className={`inline-flex h-10 w-10 items-center justify-center rounded-md transition ${
+                  viewMode === 'list'
+                    ? 'bg-slate-900 text-white shadow-sm'
+                    : 'text-slate-500 hover:bg-white hover:text-slate-900'
+                }`}
+                aria-label="List view"
+                title="List View"
+              >
+                <List size={18} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('grid')}
+                className={`inline-flex h-10 w-10 items-center justify-center rounded-md transition ${
+                  viewMode === 'grid'
+                    ? 'bg-slate-900 text-white shadow-sm'
+                    : 'text-slate-500 hover:bg-white hover:text-slate-900'
+                }`}
+                aria-label="Grid view"
+                title="Grid View"
+              >
+                <LayoutGrid size={18} />
+              </button>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-slate-700">
+              <span className="font-semibold capitalize">{viewMode} View</span>
+              <span className="text-slate-400">|</span>
+              <span>{teams.length} records</span>
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+                Latest update
+              </span>
+            </div>
+          </div>
         </div>
 
         {pageError && <AlertBox message={pageError} type="error" />}
@@ -465,9 +588,21 @@ function MemberPage() {
           <div className="px-6 py-10 text-sm text-slate-500">Loading teams...</div>
         ) : teams.length === 0 ? (
           <div className="px-6 py-10 text-sm text-slate-500">No team records found.</div>
+        ) : viewMode === 'grid' ? (
+          <div className="grid gap-5 p-4 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-6">
+            {teams.map((team) => (
+              <TeamCard
+                key={team.teamId}
+                team={team}
+                isDeleting={deletingTeamId === team.teamId}
+                onEdit={() => void openEditModal(team.teamId)}
+                onDelete={() => void openDeleteConfirm(team.teamId)}
+              />
+            ))}
+          </div>
         ) : (
           <div className="w-full overflow-x-auto">
-            <table className="w-full min-w-[68rem] divide-y divide-slate-200 text-left text-sm">
+            <table className="w-full min-w-272 divide-y divide-slate-200 text-left text-sm">
               <thead className="sticky top-0 z-10 bg-slate-50 text-slate-600 shadow-[0_1px_0_0_rgba(226,232,240,1)]">
                 <tr>
                   <th className="px-6 py-3 font-medium">Image</th>

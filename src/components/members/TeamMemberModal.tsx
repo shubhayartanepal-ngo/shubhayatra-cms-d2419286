@@ -1,6 +1,7 @@
-import type { ChangeEvent, FormEvent } from 'react'
+import { useEffect, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
 
 import { ExternalLink } from 'lucide-react'
+import { FaFacebookF, FaLinkedinIn, FaTwitter } from 'react-icons/fa'
 import { Link } from 'react-router'
 
 import Button from '../ui/button/Button'
@@ -59,6 +60,21 @@ function TeamMemberModal({
 }: TeamMemberModalProps) {
   const isEditMode = editingTeamId !== null
   const isCloseDisabled = isSaving || isLoadingTeam || isUploading
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!selectedImage) {
+      setImagePreviewUrl(null)
+      return undefined
+    }
+
+    const objectUrl = URL.createObjectURL(selectedImage)
+    setImagePreviewUrl(objectUrl)
+
+    return () => {
+      URL.revokeObjectURL(objectUrl)
+    }
+  }, [selectedImage])
 
   return (
     <Modal
@@ -71,6 +87,7 @@ function TeamMemberModal({
       }
       onClose={onClose}
       closeDisabled={isCloseDisabled}
+      maxWidthClassName="max-w-3xl"
     >
       {isLoadingTeam ? (
         <div className="px-6 py-10 text-sm text-slate-500">Loading team details...</div>
@@ -82,8 +99,8 @@ function TeamMemberModal({
             </div>
           ) : null}
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="space-y-2 md:col-span-2">
+          <div className="space-y-6">
+            <label className="space-y-2">
               <span className="text-sm font-medium text-slate-700">Team Name</span>
               <input
                 type="text"
@@ -92,18 +109,61 @@ function TeamMemberModal({
                 onChange={(event) => onFieldChange('teamName', event.target.value)}
                 disabled={isSaving || isUploading}
                 className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/10 disabled:cursor-not-allowed disabled:bg-slate-50"
-                placeholder="Enter team name"
+                placeholder="Enter Full Name"
               />
             </label>
 
+            <div className="flex flex-col gap-8 mt-2 sm:flex-row sm:items-center">
+                <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-slate-700 bg-slate-50 shadow-sm">
+                {imagePreviewUrl ? (
+                  <img
+                    src={imagePreviewUrl}
+                    alt="Profile image preview"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span className="h-full w-full rounded-full bg-linear-to-br from-slate-50 to-slate-100" />
+                )}
+              </div>
+
+                <div className="flex flex-col gap-4">
+                <div>
+                  <p className="text-sm font-medium text-slate-900">Profile Image Preview</p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {selectedImage ? `Selected: ${selectedImage.name}` : 'Choose a square image for the best fit.'}
+                  </p>
+                </div>
+
+                <label className="inline-flex w-fit cursor-pointer items-center rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60">
+                  Choose File
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg" 
+                    onChange={onImageChange}
+                    disabled={isSaving || isUploading}
+                    className="sr-only"
+                  />
+                </label>
+              </div>
+            </div>
+
             <label className="space-y-2">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-3">
                 <span className="text-sm font-medium text-slate-700">Honorific</span>
                 <div className="flex items-center gap-3">
-                  <button type="button" onClick={onRefreshOptions} className="text-xs text-slate-500 hover:text-brand-blue" title="Refresh honorifics">
+                  <button
+                    type="button"
+                    onClick={onRefreshOptions}
+                    className="text-xs text-slate-500 hover:text-brand-blue"
+                    title="Refresh honorifics"
+                  >
                     Refresh
                   </button>
-                  <Link to="/team-settings" target="_blank" className="inline-flex items-center gap-1 text-xs font-medium text-brand-blue hover:underline">
+                  <Link
+                    to="/team-settings"
+                    target="_blank"
+                    className="inline-flex items-center gap-1 text-xs font-medium text-brand-blue hover:underline"
+                  >
                     Add new <ExternalLink size={12} />
                   </Link>
                 </div>
@@ -124,7 +184,7 @@ function TeamMemberModal({
               </select>
             </label>
 
-            <div className="space-y-2 md:col-span-2">
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-slate-700">Designations</span>
                 <div className="flex items-center gap-3">
@@ -136,79 +196,56 @@ function TeamMemberModal({
                   </Link>
                 </div>
               </div>
-              <div className="grid gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="flex flex-wrap gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
                 {designationOptions.map((option) => (
-                  <label
+                  <button
                     key={option.id}
-                    className="flex cursor-pointer items-center gap-3 rounded-lg bg-white px-3 py-2 text-sm text-slate-700 shadow-sm ring-1 ring-slate-200"
+                    type="button"
+                    onClick={() => onToggleDesignation(String(option.id))}
+                    disabled={isSaving || isUploading}
+                    aria-pressed={formState.designationIds.includes(String(option.id))}
+                    className={`inline-flex items-center gap-3 rounded-full border px-5 py-2 text-sm shadow-sm transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                      formState.designationIds.includes(String(option.id))
+                        ? 'border-emerald-300 bg-emerald-100 text-slate-900'
+                        : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                    }`}
                   >
-                    <input
-                      type="checkbox"
-                      checked={formState.designationIds.includes(String(option.id))}
-                      onChange={() => onToggleDesignation(String(option.id))}
-                      disabled={isSaving || isUploading}
-                      className="h-4 w-4 rounded border-slate-300 text-brand-blue focus:ring-brand-blue/20"
-                    />
                     {option.label}
-                  </label>
+                    <span className="text-base leading-none text-slate-500">×</span>
+                  </button>
                 ))}
               </div>
             </div>
 
-            <label className="space-y-2">
-              <span className="text-sm font-medium text-slate-700">Twitter Link</span>
-              <input
-                type="url"
-                value={formState.teamTwitterLink}
-                onChange={(event) => onFieldChange('teamTwitterLink', event.target.value)}
-                disabled={isSaving || isUploading}
-                className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/10 disabled:cursor-not-allowed disabled:bg-slate-50"
-                placeholder="https://twitter.com/username"
-              />
-            </label>
+            <SocialLinkField
+              label="Twitter Link"
+              value={formState.teamTwitterLink}
+              placeholder="https://twitter.com/username"
+              icon={<FaTwitter size={18} />}
+              iconClassName="bg-[#1DA1F2] text-white"
+              onChange={(value) => onFieldChange('teamTwitterLink', value)}
+              disabled={isSaving || isUploading}
+            />
 
-            <label className="space-y-2">
-              <span className="text-sm font-medium text-slate-700">LinkedIn Link</span>
-              <input
-                type="url"
-                value={formState.teamLinkedInLink}
-                onChange={(event) => onFieldChange('teamLinkedInLink', event.target.value)}
-                disabled={isSaving || isUploading}
-                className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/10 disabled:cursor-not-allowed disabled:bg-slate-50"
-                placeholder="https://linkedin.com/in/username"
-              />
-            </label>
+            <SocialLinkField
+              label="LinkedIn Link"
+              value={formState.teamLinkedInLink}
+              placeholder="https://linkedin.com/in/username"
+              icon={<FaLinkedinIn size={18} />}
+              iconClassName="bg-[#0A66C2] text-white"
+              onChange={(value) => onFieldChange('teamLinkedInLink', value)}
+              disabled={isSaving || isUploading}
+            />
 
-            <label className="space-y-2 md:col-span-2">
-              <span className="text-sm font-medium text-slate-700">Facebook Link</span>
-              <input
-                type="url"
-                value={formState.teamFacebookLink}
-                onChange={(event) => onFieldChange('teamFacebookLink', event.target.value)}
-                disabled={isSaving || isUploading}
-                className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/10 disabled:cursor-not-allowed disabled:bg-slate-50"
-                placeholder="https://facebook.com/username"
-              />
-            </label>
-          </div>
-
-          <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4">
-            <div className="space-y-2"> 
-              <label className="flex-1 space-y-2">
-                <span className="text-sm font-medium text-slate-700">Profile image</span>
-                <input
-                  type="file"
-                  accept="image/png,image/jpeg,image/jpg"
-                  onChange={onImageChange}
-                  disabled={isSaving || isUploading}
-                  className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition file:mr-4 file:rounded-md file:border-0 file:bg-brand-blue file:px-3 file:py-2 file:text-sm file:font-medium file:text-white disabled:cursor-not-allowed disabled:bg-slate-50"
-                />
-              </label>
-            </div>
-                
-            {selectedImage ? (
-              <p className="mt-3 text-sm text-slate-600">Selected: {selectedImage.name}</p>
-            ) : null}
+            <SocialLinkField
+              label="Facebook Link"
+              value={formState.teamFacebookLink}
+              placeholder="https://facebook.com/username"
+              icon={<FaFacebookF size={18} />}
+              iconClassName="bg-[#1877F2] text-white"
+              onChange={(value) => onFieldChange('teamFacebookLink', value)}
+              disabled={isSaving || isUploading}
+            />
           </div>
 
           <div className="flex justify-end gap-3 border-t border-slate-200 pt-4">
@@ -226,6 +263,43 @@ function TeamMemberModal({
         </form>
       )}
     </Modal>
+  )
+}
+
+type SocialLinkFieldProps = {
+  label: string
+  value: string
+  placeholder: string
+  icon: ReactNode
+  iconClassName: string
+  onChange: (value: string) => void
+  disabled?: boolean
+}
+
+function SocialLinkField({
+  label,
+  value,
+  placeholder,
+  icon,
+  iconClassName,
+  onChange,
+  disabled = false,
+}: SocialLinkFieldProps) {
+  return (
+    <label className="space-y-2">
+      <span className="text-sm font-medium text-slate-700">{label}</span>
+      <div className="flex overflow-hidden rounded-lg border border-slate-200 bg-white focus-within:border-brand-blue focus-within:ring-2 focus-within:ring-brand-blue/10">
+        <span className={`flex w-12 items-center justify-center ${iconClassName}`}>{icon}</span>
+        <input
+          type="url"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          disabled={disabled}
+          className="min-w-0 flex-1 border-0 px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-50"
+          placeholder={placeholder}
+        />
+      </div>
+    </label>
   )
 }
 

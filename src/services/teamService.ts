@@ -305,11 +305,7 @@ const teamService = {
     const formData = new FormData()
     formData.append('file', file)
 
-    const response = await apiClient.put(`/v1/admin/team/${teamId}/profileImage`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    })
+    const response = await apiClient.put(`/v1/admin/team/${teamId}/profileImage`, formData)
 
     return unwrapData<TeamRecord>(response)
   },

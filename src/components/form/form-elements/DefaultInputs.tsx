@@ -55,7 +55,6 @@ export default function DefaultInputs() {
               type="date"
               id="datePicker"
               name="datePicker"
-              onChange={(e) => console.log(e.target.value)}
             />
             <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -72,7 +71,6 @@ export default function DefaultInputs() {
               type="time"
               id="tm"
               name="tm"
-              onChange={(e) => console.log(e.target.value)}
             />
             <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">

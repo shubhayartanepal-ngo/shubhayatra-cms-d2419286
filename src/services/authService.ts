@@ -14,7 +14,6 @@ const verifyEmailRequests = new Map<string, Promise<unknown>>()
 const authService = {
   login: async (payload: LoginPayload) => {
     const response = await apiClient.post('/auth/login', payload)
-    console.log(response.data.data)
     return response.data.data
   },
 

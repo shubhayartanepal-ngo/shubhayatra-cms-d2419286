@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import type { MouseEvent, ReactNode } from 'react'
 import { X } from 'lucide-react'
 
@@ -20,6 +21,17 @@ function Modal({
   children,
   maxWidthClassName = 'max-w-2xl',
 }: ModalProps) {
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !closeDisabled) {
+        onClose()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [onClose, closeDisabled])
+
   if (!isOpen) {
     return null
   }
@@ -31,7 +43,11 @@ function Modal({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4 py-6 backdrop-blur-sm"
-      onClick={onClose}
+      onClick={() => {
+        if (!closeDisabled) {
+          onClose()
+        }
+      }}
     >
       <div
         role="dialog"

@@ -6,6 +6,7 @@ import {
   Image,
   Landmark,
   LayoutDashboard,
+  Mail,
   Newspaper,
   Search,
   Settings,
@@ -45,25 +46,25 @@ export const sidebarSections: SidebarSection[] = [
     name: 'CORE CONTENT',
     description: 'Manage the mission',
     items: [
-      {
-        name: 'Initiatives',
-        icon: <Sprout size={16} />,
-      },
-      {
-        name: 'Heritage Sites',
-        icon: <Landmark size={16} />,
-      },
+      // {
+      //   name: 'Initiatives',
+      //   icon: <Sprout size={16} />,
+      // },
+      // {
+      //   name: 'Heritage Sites',
+      //   icon: <Landmark size={16} />,
+      // },
       {
         name: 'News & Blog',
         icon: <Newspaper size={16} />,
         path: '/news',
       },
-      {
-        name: 'Our Moral & Values',
-        icon: <FileText size={16} />,
-        path: '/our-moral-values',
-        new: true,
-      },
+      // {
+      //   name: 'Our Moral & Values',
+      //   icon: <FileText size={16} />,
+      //   path: '/our-moral-values',
+      //   new: true,
+      // },
     ],
   },
   {
@@ -75,14 +76,14 @@ export const sidebarSections: SidebarSection[] = [
         icon: <Users size={16} />,
         path: '/members',
       },
-      {
-        name: 'Volunteers',
-        icon: <UsersRound size={16} />,
-      },
-      {
-        name: 'Partners',
-        icon: <Building2 size={16} />,
-      },
+      // {
+      //   name: 'Volunteers',
+      //   icon: <UsersRound size={16} />,
+      // },
+      // {
+      //   name: 'Partners',
+      //   icon: <Building2 size={16} />,
+      // },
     ],
   },
   {
@@ -94,14 +95,19 @@ export const sidebarSections: SidebarSection[] = [
         icon: <Image size={16} />,
         path: '/gallery',
       },
-      {
-        name: 'Documents',
-        icon: <FileText size={16} />,
-      },
+      // {
+      //   name: 'Documents',
+      //   icon: <FileText size={16} />,
+      // },
       {
         name: 'Hero Section',
         icon: <Image size={16} />,
         path: '/hero-section',
+      },
+      {
+        name: 'Contact Info',
+        icon: <Mail size={16} />,
+        path: '/contact-info',
       },
     ],
   },
@@ -111,11 +117,12 @@ export const sidebarSections: SidebarSection[] = [
       {
         name: 'Events',
         icon: <Calendar size={16} />,
+        path: '/events',
       },
-      {
-        name: 'Inquiries',
-        icon: <Search size={16} />,
-      },
+      // {
+      //   name: 'Inquiries',
+      //   icon: <Search size={16} />,
+      // },
     ],
   },
   {

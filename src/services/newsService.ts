@@ -63,6 +63,11 @@ export type NewsPayload = {
 const STORAGE_KEY = 'shubhayatra_news_crud_v1'
 
 type StoredNewsItem = Partial<NewsItem> & { id: number; title: string }
+type ApiNewsItem = StoredNewsItem & {
+  imageUrls?: string[]
+  createdAt?: string
+  updatedAt?: string
+}
 
 const cloneSeed = (): NewsItem[] =>
   seedNewsData.map((item) => normalizeNewsItem(item as StoredNewsItem))
@@ -150,7 +155,7 @@ const normalizeMeta = (value: unknown): NewsMeta | undefined => {
 }
 
 const normalizeNewsItem = (
-  item: StoredNewsItem,
+  item: ApiNewsItem,
   defaults?: { createdAt?: string; updatedAt?: string }
 ): NewsItem => {
   const header = asTrimmedString(item.header)
@@ -167,7 +172,7 @@ const normalizeNewsItem = (
     description,
     content: asTrimmedString(item.content) || description,
     image: (() => {
-      const imageSource = item.image ?? item.images
+      const imageSource = item.image ?? item.imageUrls ?? item.images
       if (!imageSource) return undefined
 
       const toUrl = (entry: unknown) => {
@@ -198,8 +203,8 @@ const normalizeNewsItem = (
     categories: normalizeStringList(item.categories),
     author: normalizeAuthor(item.author),
     meta: normalizeMeta(item.meta),
-    created_at: asTrimmedString(item.created_at) || defaults?.createdAt,
-    updated_at: asTrimmedString(item.updated_at) || defaults?.updatedAt,
+    created_at: asTrimmedString(item.created_at) || asTrimmedString(item.createdAt) || defaults?.createdAt,
+    updated_at: asTrimmedString(item.updated_at) || asTrimmedString(item.updatedAt) || defaults?.updatedAt,
   }
 }
 
@@ -314,7 +319,7 @@ const newsService = {
   list: async (): Promise<NewsItem[]> => {
     if (API_ENABLED) {
       try {
-        const res = await apiClient.get('/news')
+        const res = await apiClient.get('/v1/public/news')
         const data = res.data as unknown
         if (!Array.isArray(data)) return sortById(cloneSeed())
         return sortById((data as StoredNewsItem[]).map((d) => normalizeNewsItem(d)))
@@ -340,19 +345,24 @@ const newsService = {
   findById: async (id: number): Promise<NewsItem | undefined> => {
     if (API_ENABLED) {
       try {
-        const res = await apiClient.get(`/news/${id}`)
-        const data = res.data as StoredNewsItem
-        return normalizeNewsItem(data)
+        // Backend does not support GET /news/{id}, so fetch the list and find the item
+        const res = await apiClient.get('/v1/public/news')
+        const data = res.data as unknown
+        const items = !Array.isArray(data) ? [] : (data as StoredNewsItem[])
+        const found = items.find((item) => item.id === id)
+        return found ? normalizeNewsItem(found) : undefined
       } catch {
         // fallthrough
       }
     }
 
     try {
-      const res = await fetch(`${API_BASE}/${id}`)
+      const res = await fetch(API_BASE)
       if (!res.ok) return undefined
-      const data = (await res.json()) as StoredNewsItem
-      return normalizeNewsItem(data)
+      const data = (await res.json()) as unknown
+      const items = !Array.isArray(data) ? [] : (data as StoredNewsItem[])
+      const found = items.find((item) => item.id === id)
+      return found ? normalizeNewsItem(found) : undefined
     } catch {
       return readNews().find((item) => item.id === id)
     }
@@ -363,7 +373,7 @@ const newsService = {
       try {
         // If caller provided a FormData, forward it directly
         if (typeof FormData !== 'undefined' && payload instanceof FormData) {
-          const res = await apiClient.post('/news', payload)
+          const res = await apiClient.post('/v1/admin/news', payload)
           const data = res.data as StoredNewsItem
           return normalizeNewsItem(data)
         }
@@ -378,7 +388,7 @@ const newsService = {
           }
         })
 
-        const res = await apiClient.post('/news', form)
+        const res = await apiClient.post('/v1/admin/news', form)
         const data = res.data as StoredNewsItem
         return normalizeNewsItem(data)
       } catch {
@@ -400,14 +410,14 @@ const newsService = {
       try {
         // Directly forward FormData when provided
         if (typeof FormData !== 'undefined' && payload instanceof FormData) {
-          const res = await apiClient.put(`/news/${id}`, payload)
+          const res = await apiClient.put(`/v1/admin/news/${id}`, payload)
           const data = res.data as StoredNewsItem
           return normalizeNewsItem(data)
         }
 
         const dataPayload = payload as NewsPayload
         const form = buildNewsFormData(dataPayload)
-        const res = await apiClient.put(`/news/${id}`, form)
+        const res = await apiClient.put(`/v1/admin/news/${id}`, form)
         const data = res.data as StoredNewsItem
         return normalizeNewsItem(data)
       } catch {
@@ -432,7 +442,7 @@ const newsService = {
   remove: async (id: number): Promise<boolean> => {
     if (API_ENABLED) {
       try {
-        const res = await apiClient.delete(`/news/${id}`)
+        const res = await apiClient.delete(`/v1/admin/news/${id}`)
         if (res.status >= 200 && res.status < 300) return true
         // fallback to local
       } catch {

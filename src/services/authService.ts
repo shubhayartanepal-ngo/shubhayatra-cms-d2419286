@@ -18,7 +18,7 @@ const authService = {
   },
 
   register: async (payload: RegisterPayload) => {
-    const response = await apiClient.post('/auth/signup', payload)
+    const response = await apiClient.post('/v1/create', payload)
     return response.data
   },
 

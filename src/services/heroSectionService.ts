@@ -61,7 +61,7 @@ const resolveHeroList = (payload: unknown): HeroSectionResponse[] => {
 
 const heroSectionService = {
   getHeroSection: async (): Promise<HeroSectionResponse | HeroSectionResponse[]> => {
-    const response = await apiClient.get('/v1/admin/hero-section')
+    const response = await apiClient.get('/v1/public/hero-section')
 
     const payload = unwrapData<HeroSectionResponse | HeroSectionResponse[]>(response)
 

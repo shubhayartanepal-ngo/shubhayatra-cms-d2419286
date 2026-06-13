@@ -1,19 +1,18 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { Plus, Upload, Video, Image as ImageIcon, Trash2, Pencil, Search } from 'lucide-react'
+import React, { useEffect, useState, useRef } from 'react'
+import { Plus, Upload, Trash2, Pencil, Search, Folder, ImageIcon, LayoutGrid, List } from 'lucide-react'
+import { useNavigate } from 'react-router'
 import toast from 'react-hot-toast'
 import Button from '../../components/ui/button/Button'
 import Modal from '../../components/ui/modal/Modal'
 import { errorHandler } from '../../common/errorHandler'
-import galleryService from '../../services/galleryService.ts'
-import type { GalleryUploadType, GalleryItem, GalleryMediaType } from '../../services/galleryService.ts'
-import MediaUploadSection from '../../components/gallery/MediaUploadSection.tsx'
-import PreviewGrid from '../../components/gallery/PreviewGrid.tsx'
-import FormFields from '../../components/gallery/FormFields.tsx'
-import AlertBox from '../../components/common/AlertBox.tsx'
-import EmptyState from '../../components/common/EmptyState.tsx'
+import galleryService, { type Album, type GalleryUploadType } from '../../services/galleryService'
+import MediaUploadSection from '../../components/gallery/MediaUploadSection'
+import PreviewGrid from '../../components/gallery/PreviewGrid'
+import FormFields from '../../components/gallery/FormFields'
+import AlertBox from '../../components/common/AlertBox'
+import EmptyState from '../../components/common/EmptyState'
+import ConfirmDialog from '../../components/common/ConfirmDialog'
 import { getGalleryMediaUrl } from '../../common/mediaUrl'
-
-import ConfirmDialog from '../../components/common/ConfirmDialog.tsx'
 
 type SelectedMediaItem = {
   id: string
@@ -23,38 +22,40 @@ type SelectedMediaItem = {
 }
 
 const GalleryPage: React.FC = () => {
+  const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  
+  const [albums, setAlbums] = useState<Album[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  
+  const [searchQuery, setSearchQuery] = useState('')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  
+  // Upload states
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
   const [selectedMedia, setSelectedMedia] = useState<SelectedMediaItem[]>([])
   const [uploadTitle, setUploadTitle] = useState('')
   const [uploadType, setUploadType] = useState<'MIXED' | 'IMAGE' | 'VIDEO'>('MIXED')
   const [isUploading, setIsUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
-  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([])
-  const [isLoadingGallery, setIsLoadingGallery] = useState(true)
-  const [galleryError, setGalleryError] = useState<string | null>(null)
+  
+  // Delete states
   const [deletingId, setDeletingId] = useState<string | number | null>(null)
   const [pendingDeleteId, setPendingDeleteId] = useState<string | number | null>(null)
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const [pendingBulkDelete, setPendingBulkDelete] = useState(false)
-  const [isBulkDeleting, setIsBulkDeleting] = useState(false)
   
-  // Search and Filter states
-  const [searchQuery, setSearchQuery] = useState('')
-  const [filterType, setFilterType] = useState<'ALL' | GalleryMediaType>('ALL')
-  
-  // Edit Title states
-  const [editingGroupItems, setEditingGroupItems] = useState<GalleryItem[]>([])
+  // Edit title states
+  const [editingAlbumId, setEditingAlbumId] = useState<string | number | null>(null)
   const [editingTitle, setEditingTitle] = useState('')
   const [isUpdatingTitle, setIsUpdatingTitle] = useState(false)
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      fetchFilteredGallery()
+      fetchAlbums()
     }, 500)
 
     return () => clearTimeout(delayDebounceFn)
-  }, [searchQuery, filterType])
+  }, [searchQuery])
 
   useEffect(() => {
     return () => {
@@ -62,81 +63,43 @@ const GalleryPage: React.FC = () => {
     }
   }, [selectedMedia])
 
-  const fetchFilteredGallery = async () => {
-    setIsLoadingGallery(true)
-    setGalleryError(null)
-
+  const fetchAlbums = async () => {
+    setIsLoading(true)
+    setError(null)
     try {
-      let items: GalleryItem[] = []
+      let items = await galleryService.listAlbums()
       
       if (searchQuery.trim() !== '') {
-        items = await galleryService.searchByTitle(searchQuery.trim())
-        if (filterType !== 'ALL') {
-           items = items.filter(item => item.mediaType === filterType)
-        }
-      } else if (filterType !== 'ALL') {
-        items = await galleryService.searchByType(filterType as GalleryMediaType)
-      } else {
-        items = await galleryService.listGallery()
+        const q = searchQuery.toLowerCase()
+        items = items.filter(a => a.programName.toLowerCase().includes(q))
       }
       
-      setGalleryItems(items)
-    } catch (error) {
-      setGalleryError(errorHandler(error))
+      // Sort: maybe latest ID first or alphabetical
+      items.sort((a, b) => {
+        // Just descending order by ID (assuming higher ID = newer)
+        const idA = Number(a.id) || 0
+        const idB = Number(b.id) || 0
+        return idB - idA
+      })
+      
+      setAlbums(items)
+    } catch (err) {
+      setError(errorHandler(err))
     } finally {
-      setIsLoadingGallery(false)
+      setIsLoading(false)
     }
   }
 
-  const groupedGalleryItems = useMemo(() => {
-    return galleryItems.reduce((acc, item) => {
-      const title = (item.title || 'Untitled').trim()
-      if (!acc[title]) {
-        acc[title] = []
-      }
-      acc[title].push(item)
-      return acc
-    }, {} as Record<string, GalleryItem[]>)
-  }, [galleryItems])
-
-  const sortedGroupedGalleryItems = useMemo(() => {
-    return Object.entries(groupedGalleryItems).sort((a, b) => {
-      const latestA = Math.max(...a[1].map((item) => new Date(item.uploadedAt).getTime()))
-      const latestB = Math.max(...b[1].map((item) => new Date(item.uploadedAt).getTime()))
-
-      const safeA = Number.isFinite(latestA) ? latestA : 0
-      const safeB = Number.isFinite(latestB) ? latestB : 0
-
-      if (safeA === safeB) {
-        return a[0].localeCompare(b[0])
-      }
-
-      return safeB - safeA
-    })
-  }, [groupedGalleryItems])
-
-  const loadGalleryItems = async () => {
-    fetchFilteredGallery()
-  }
-
+  // UPLOAD LOGIC
   const resetSelectedMedia = () => {
     selectedMedia.forEach((item) => URL.revokeObjectURL(item.url))
     setSelectedMedia([])
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
+    if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
-  const openUploadModal = () => {
-    setIsUploadModalOpen(true)
-  }
-
+  const openUploadModal = () => setIsUploadModalOpen(true)
   const closeUploadModal = () => {
-    if (isUploading) {
-      return
-    }
-
+    if (isUploading) return
     setIsUploadModalOpen(false)
     setUploadError(null)
     setUploadTitle('')
@@ -145,20 +108,14 @@ const GalleryPage: React.FC = () => {
   }
 
   const clearSelectedMedia = () => {
-    if (isUploading) {
-      return
-    }
-
+    if (isUploading) return
     setUploadError(null)
     resetSelectedMedia()
   }
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || [])
-
-    if (files.length === 0) {
-      return
-    }
+    if (files.length === 0) return
 
     const nextSelectedMedia = files
       .filter((file) => file.type.startsWith('image/') || file.type.startsWith('video/'))
@@ -181,45 +138,29 @@ const GalleryPage: React.FC = () => {
   }
 
   const handleUploadTypeChange = (value: string) => {
-    if (value !== 'IMAGE' && value !== 'VIDEO' && value !== 'MIXED') {
-      return
-    }
-
-    if (value === uploadType) {
-      return
-    }
-
+    if (value !== 'IMAGE' && value !== 'VIDEO' && value !== 'MIXED') return
+    if (value === uploadType) return
     setUploadError(null)
     setUploadType(value as 'MIXED' | 'IMAGE' | 'VIDEO')
-    if (value !== 'MIXED') {
-      resetSelectedMedia()
-    }
+    if (value !== 'MIXED') resetSelectedMedia()
   }
 
   const removeSelectedMedia = (mediaId: string) => {
     setSelectedMedia((currentMedia) => {
       const targetMedia = currentMedia.find((item) => item.id === mediaId)
-
-      if (targetMedia) {
-        URL.revokeObjectURL(targetMedia.url)
-      }
-
+      if (targetMedia) URL.revokeObjectURL(targetMedia.url)
       return currentMedia.filter((item) => item.id !== mediaId)
     })
   }
 
   const addSelectedMediaToGallery = async () => {
-    if (selectedMedia.length === 0) {
-      return
-    }
+    if (selectedMedia.length === 0) return
 
     setIsUploading(true)
     setUploadError(null)
 
     try {
       const title = uploadTitle.trim() || new Date().toLocaleDateString()
-      
-      // Determine which type(s) to upload
       let filesToUpload = selectedMedia
       let uploadTypeToUse: GalleryUploadType = 'IMAGE'
       
@@ -230,9 +171,8 @@ const GalleryPage: React.FC = () => {
         filesToUpload = selectedMedia.filter((m) => m.kind === 'video')
         uploadTypeToUse = 'VIDEO'
       } else {
-        // MIXED - service will handle separation
         filesToUpload = selectedMedia
-        uploadTypeToUse = 'IMAGE' // Default, service will split by actual type
+        uploadTypeToUse = 'IMAGE' 
       }
       
       if (filesToUpload.length === 0) {
@@ -248,10 +188,10 @@ const GalleryPage: React.FC = () => {
 
       const successMessage =
         (response && typeof response === 'object' && 'message' in response && response.message) ||
-        'Gallery media uploaded successfully'
+        'Gallery album created successfully'
 
       toast.success(String(successMessage))
-      await loadGalleryItems()
+      await fetchAlbums()
       closeUploadModal()
     } catch (error) {
       const message = errorHandler(error)
@@ -262,94 +202,40 @@ const GalleryPage: React.FC = () => {
     }
   }
 
-  const handleDeleteGalleryItem = async () => {
+  // DELETE LOGIC
+  const handleDeleteAlbum = async () => {
     if (pendingDeleteId === null) return
-
     setDeletingId(pendingDeleteId)
-
     try {
-      await galleryService.deleteGalleryItem(pendingDeleteId)
-      toast.success('Gallery item deleted successfully')
-      await loadGalleryItems()
+      await galleryService.deleteAlbum(pendingDeleteId)
+      toast.success('Album deleted successfully')
+      await fetchAlbums()
     } catch (error) {
-      const message = errorHandler(error)
-      toast.error(message)
+      toast.error(errorHandler(error))
     } finally {
       setDeletingId(null)
       setPendingDeleteId(null)
     }
   }
 
-  const openDeleteConfirm = (id: string | number) => {
-    setPendingDeleteId(id)
-  }
-
-  const toggleSelectItem = (id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
-
-  const selectAllInGroup = (items: GalleryItem[]) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev)
-      items.forEach((it) => next.add(String(it.id)))
-      return next
-    })
-  }
-
-  const deselectAllInGroup = (items: GalleryItem[]) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev)
-      items.forEach((it) => next.delete(String(it.id)))
-      return next
-    })
-  }
-
-  const openBulkDeleteConfirm = () => setPendingBulkDelete(true)
-
-  const handleBulkDelete = async () => {
-    if (selectedIds.size === 0) return
-    setIsBulkDeleting(true)
-    try {
-      await Promise.all(Array.from(selectedIds).map((id) => galleryService.deleteGalleryItem(id)))
-      toast.success('Selected items deleted')
-      await loadGalleryItems()
-      setSelectedIds(new Set())
-    } catch (error) {
-      toast.error(errorHandler(error))
-    } finally {
-      setIsBulkDeleting(false)
-      setPendingBulkDelete(false)
-    }
-  }
-
-  const closeDeleteConfirm = () => {
-    setPendingDeleteId(null)
-  }
-
-  const openEditTitle = (title: string, items: GalleryItem[]) => {
-    setEditingGroupItems(items)
-    setEditingTitle(title)
+  // EDIT LOGIC
+  const openEditTitle = (album: Album) => {
+    setEditingAlbumId(album.id)
+    setEditingTitle(album.programName)
   }
 
   const closeEditTitle = () => {
-    setEditingGroupItems([])
+    setEditingAlbumId(null)
     setEditingTitle('')
   }
 
   const handleUpdateTitle = async () => {
-    if (editingGroupItems.length === 0) return
+    if (!editingAlbumId) return
     setIsUpdatingTitle(true)
     try {
-      await Promise.all(
-        editingGroupItems.map((item) => galleryService.updateTitle(item.id, editingTitle))
-      )
-      toast.success('Title updated successfully')
-      await fetchFilteredGallery()
+      await galleryService.updateAlbum(editingAlbumId, { programName: editingTitle })
+      toast.success('Album title updated successfully')
+      await fetchAlbums()
       closeEditTitle()
     } catch (error) {
       toast.error(errorHandler(error))
@@ -362,15 +248,14 @@ const GalleryPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 overflow-hidden rounded-2xl border border-slate-200 bg-white px-6 py-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Gallery</h1>
+          <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Albums</h1>
           <p className="max-w-2xl text-sm text-slate-500">
-            Manage gallery uploads and preview multiple images or videos before adding them to the
-            collection.
+            Manage your gallery albums. Create new albums, or click on one to manage its media.
           </p>
         </div>
         <div className="flex shrink-0 items-center justify-end">
-          <Button type="button" size="sm" startIcon={<Upload size={16} />} onClick={openUploadModal}>
-            Upload Images & Videos
+          <Button type="button" size="sm" startIcon={<Plus size={16} />} onClick={openUploadModal}>
+            Create Album
           </Button>
         </div>
       </div>
@@ -380,147 +265,160 @@ const GalleryPage: React.FC = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
           <input
             type="text"
-            placeholder="Search by title..."
+            placeholder="Search albums..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full rounded-lg border border-slate-200 py-2.5 pl-10 pr-4 text-sm focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue"
           />
         </div>
-        <div className="flex shrink-0 rounded-lg border border-slate-200 bg-white p-1">
+        <div className="flex shrink-0 items-center rounded-lg border border-slate-200 bg-white p-1">
           <button
-            onClick={() => setFilterType('ALL')}
-            className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${filterType === 'ALL' ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+            onClick={() => setViewMode('grid')}
+            className={`rounded-md p-2 transition ${viewMode === 'grid' ? 'bg-slate-100 text-brand-blue' : 'text-slate-400 hover:text-slate-600'}`}
+            title="Grid view"
           >
-            All
+            <LayoutGrid size={18} />
           </button>
           <button
-            onClick={() => setFilterType('IMAGE')}
-            className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${filterType === 'IMAGE' ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+            onClick={() => setViewMode('list')}
+            className={`rounded-md p-2 transition ${viewMode === 'list' ? 'bg-slate-100 text-brand-blue' : 'text-slate-400 hover:text-slate-600'}`}
+            title="List view"
           >
-            Images
-          </button>
-          <button
-            onClick={() => setFilterType('VIDEO')}
-            className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${filterType === 'VIDEO' ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
-          >
-            Videos
+            <List size={18} />
           </button>
         </div>
       </div>
 
-      <AlertBox message={galleryError} type="error" />
+      <AlertBox message={error} type="error" />
 
-      {isLoadingGallery ? (
-        <EmptyState message="Loading gallery..." />
-      ) : galleryItems.length === 0 ? (
-        <EmptyState message="No gallery items yet. Start by uploading your first image or video." />
+      {isLoading ? (
+        <EmptyState message="Loading albums..." />
+      ) : albums.length === 0 ? (
+        <EmptyState message="No albums yet. Create a new album to get started." />
       ) : (
-        <div className="space-y-10">
+        <div className={viewMode === 'grid' ? "grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "flex flex-col gap-3"}>
+          {albums.map((album) => (
+            viewMode === 'grid' ? (
+              <div
+                key={album.id}
+                className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md cursor-pointer flex flex-col"
+                onClick={() => navigate(`/gallery/${album.id}`)}
+              >
+                <div className="relative h-48 w-full bg-slate-100">
+                  {album.coverImage ? (
+                    <img
+                      src={getGalleryMediaUrl(album.coverImage)}
+                      alt={album.programName}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-slate-300">
+                      <Folder size={48} />
+                    </div>
+                  )}
+                  
+                  {/* Overlay actions */}
+                  <div className="absolute right-2 top-2 z-10 flex flex-col gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        openEditTitle(album)
+                      }}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm transition hover:bg-slate-50 hover:text-brand-blue"
+                      title="Edit album title"
+                    >
+                      <Pencil size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setPendingDeleteId(album.id)
+                      }}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white text-brand-red shadow-sm transition hover:bg-brand-red hover:text-white"
+                      title="Delete album"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
 
-          {sortedGroupedGalleryItems.map(([title, items]) => (
-            <div key={title} className="space-y-4">
-              <div className="flex items-center gap-3 border-b border-slate-200 pb-2">
-                <h2 className="text-xl font-medium text-slate-800">{title}</h2>
-                <button
-                  type="button"
-                  onClick={() => openEditTitle(title, items)}
-                  className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-brand-blue"
-                  aria-label={`Edit ${title}`}
-                  title="Edit title"
-                >
-                  <Pencil size={14} />
-                </button>
-                <div className="ml-auto flex flex-wrap items-center gap-3 text-sm">
+                <div className="flex flex-1 flex-col justify-between border-t border-slate-100 p-4">
+                  <div>
+                    <h3 className="line-clamp-1 text-base font-medium text-slate-900" title={album.programName}>
+                      {album.programName}
+                    </h3>
+                    <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
+                      <ImageIcon size={14} />
+                      <span>{album.mediaCount} {album.mediaCount === 1 ? 'item' : 'items'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div
+                key={album.id}
+                className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md cursor-pointer"
+                onClick={() => navigate(`/gallery/${album.id}`)}
+              >
+                <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-lg bg-slate-100">
+                  {album.coverImage ? (
+                    <img
+                      src={getGalleryMediaUrl(album.coverImage)}
+                      alt={album.programName}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-slate-300">
+                      <Folder size={24} />
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex flex-1 flex-col">
+                  <h3 className="text-base font-medium text-slate-900 line-clamp-1">{album.programName}</h3>
+                  <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
+                    <ImageIcon size={14} />
+                    <span>{album.mediaCount} {album.mediaCount === 1 ? 'item' : 'items'}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 pr-2">
                   <button
                     type="button"
-                    className="rounded-md border px-3 py-1 text-sm transition hover:bg-slate-100"
-                    onClick={() => selectAllInGroup(items)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      openEditTitle(album)
+                    }}
+                    className="p-2 text-slate-400 hover:text-brand-blue rounded-md transition hover:bg-slate-50"
+                    title="Edit album title"
                   >
-                    Select all
+                    <Pencil size={16} />
                   </button>
                   <button
                     type="button"
-                    className="rounded-md border px-3 py-1 text-sm transition hover:bg-slate-100"
-                    onClick={() => deselectAllInGroup(items)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setPendingDeleteId(album.id)
+                    }}
+                    className="p-2 text-slate-400 hover:text-brand-red rounded-md transition hover:bg-slate-50"
+                    title="Delete album"
                   >
-                    Deselect all
-                  </button>
-                  <button
-                    type="button"
-                    className="rounded-md border border-brand-red bg-brand-red/5 px-3 py-1 text-sm text-brand-red transition hover:bg-brand-red/10 disabled:cursor-not-allowed disabled:opacity-60"
-                    onClick={openBulkDeleteConfirm}
-                    disabled={selectedIds.size === 0}
-                  >
-                    Delete selected {selectedIds.size > 0 ? `(${selectedIds.size})` : ''}
+                    <Trash2 size={16} />
                   </button>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-                {items.map((item) => (
-                  <div
-                    key={item.id}
-                    className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-                  >
-                    <div className="relative">
-                      <label className="absolute left-2 top-2 z-20 inline-flex items-center justify-center rounded-md bg-white/70 p-1">
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.has(String(item.id))}
-                          onChange={() => toggleSelectItem(String(item.id))}
-                          className="h-4 w-4 rounded"
-                        />
-                      </label>
-                      {item.mediaType === 'VIDEO' ? (
-                        <video
-                          src={getGalleryMediaUrl(item.filePath)}
-                          className="h-36 w-full object-cover transition-transform duration-300 hover:scale-105"
-                          muted
-                          playsInline
-                          controls
-                        />
-                      ) : (
-                        <img
-                          src={getGalleryMediaUrl(item.filePath)}
-                          alt={item.title}
-                          className="h-36 w-full object-cover transition-transform duration-300 hover:scale-105"
-                        />
-                      )}
-                      <div className="absolute right-2 top-2">
-                        <button
-                          type="button"
-                          onClick={() => openDeleteConfirm(item.id)}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-950/70 text-white transition hover:bg-brand-red disabled:cursor-not-allowed disabled:opacity-60"
-                          aria-label={`Delete ${item.title}`}
-                          disabled={deletingId === item.id}
-                          title="Delete item"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="space-y-1 border-t border-slate-100 px-3 py-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-600">
-                          {item.mediaType === 'VIDEO' ? <Video size={13} /> : <ImageIcon size={13} />}
-                          {item.mediaType}
-                        </span>
-                      </div>
-                      <p className="truncate text-xs text-slate-500" title={item.fileName}>
-                        {item.fileName}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            )
           ))}
         </div>
       )}
 
+      {/* Upload/Create Modal */}
       <Modal
         isOpen={isUploadModalOpen}
-        title="Upload gallery media"
-        description="Choose multiple images or videos in one go, preview them here, and then upload them to the gallery."
+        title="Create new album"
+        description="Provide a title and select media to instantly create a new album."
         onClose={closeUploadModal}
         closeDisabled={isUploading}
         maxWidthClassName="max-w-4xl"
@@ -559,7 +457,7 @@ const GalleryPage: React.FC = () => {
               onClick={addSelectedMediaToGallery}
               disabled={selectedMedia.length === 0 || isUploading}
             >
-              {isUploading ? 'Uploading...' : 'Upload to gallery'}
+              {isUploading ? 'Creating Album...' : 'Create Album'}
             </Button>
           </div>
         </form>
@@ -567,32 +465,20 @@ const GalleryPage: React.FC = () => {
 
       <ConfirmDialog
         isOpen={pendingDeleteId !== null}
-        title="Delete gallery item"
-        message={`Are you sure you want to delete "${galleryItems.find((item) => item.id === pendingDeleteId)?.title || 'this item'}"? This action cannot be undone.`}
-        confirmText="Delete"
+        title="Delete Album"
+        message="Are you sure you want to delete this album? This will permanently remove the album and all its media. This action cannot be undone."
+        confirmText="Delete Album"
         cancelText="Cancel"
         isDestructive={true}
         isLoading={deletingId !== null}
-        onConfirm={handleDeleteGalleryItem}
-        onCancel={closeDeleteConfirm}
-      />
-
-      <ConfirmDialog
-        isOpen={pendingBulkDelete}
-        title="Delete selected items"
-        message={`Are you sure you want to delete ${selectedIds.size} selected item(s)? This action cannot be undone.`}
-        confirmText="Delete"
-        cancelText="Cancel"
-        isDestructive={true}
-        isLoading={isBulkDeleting}
-        onConfirm={handleBulkDelete}
-        onCancel={() => setPendingBulkDelete(false)}
+        onConfirm={handleDeleteAlbum}
+        onCancel={() => setPendingDeleteId(null)}
       />
 
       <Modal
-        isOpen={editingGroupItems.length > 0}
+        isOpen={editingAlbumId !== null}
         title="Rename Album"
-        description="Update the shared title for all media items in this album."
+        description="Update the title for this album."
         onClose={closeEditTitle}
         closeDisabled={isUpdatingTitle}
         maxWidthClassName="max-w-md"
